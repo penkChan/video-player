@@ -1,0 +1,70 @@
+import { Icon } from "@iconify/react";
+import { Settings } from "./Settings";
+export function VideoPlayer() {
+  return (
+    <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
+      <video
+        className="w-full h-full object-cover  relative "
+        src="/videos/coverr-a-road-through-the-hills-6377-1080p.mp4"
+      ></video>
+      <div className="progress-area-time"></div>
+      <div className="controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white">
+        <div className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer">
+          <div className="progress-bar absolute w-[50%]  bg-[rgba(255,174,0)] h-[inherit] rounded-[inherit]">
+            <span className="absolute w-[14px] h-[14px] rounded-[50%] right-[-5px] top-[50%] translate-y-[-50%] bg-[inherit]"></span>
+          </div>
+        </div>
+        <div className="progress-controls flex justify-between items-center">
+          <div className="controls-left  flex justify-between items-center">
+            <span className="icon">
+              <Icon icon="material-symbols:replay-10" className="select-none" />
+            </span>
+            <span className="icon">
+              <Icon
+                icon="material-symbols:play-arrow"
+                className="select-none"
+              />
+            </span>
+            <span className="icon">
+              <Icon
+                icon="material-symbols:forward-10"
+                className="select-none"
+              />
+            </span>
+            <span className="icon  flex justify-between items-center">
+              <Icon icon="material-symbols:volume-up" className="select-none" />
+              <input type="range" min="0" max="100" />
+            </span>
+            <div className="timer">
+              <span className="current-time">0:00</span> /{" "}
+              <span className="total-time">0:00</span>
+            </div>
+          </div>
+
+          <div className="controls-right  flex justify-between items-center">
+            <span className="icon">
+              <Icon icon="material-symbols:auto-play" className="select-none" />
+            </span>
+            <span className="icon">
+              <Icon icon="material-symbols:settings" className="select-none" />
+            </span>
+            <span className="icon">
+              <Icon
+                icon="material-symbols:picture-in-picture-alt"
+                className="select-none"
+              />
+            </span>
+            <span className="icon">
+              <Icon
+                icon="material-symbols:fullscreen"
+                className="select-none"
+              />
+            </span>
+          </div>
+        </div>
+
+        <Settings className="absolute"></Settings>
+      </div>
+    </div>
+  );
+}
