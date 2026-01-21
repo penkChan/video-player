@@ -1,5 +1,7 @@
 import { Icon } from "@iconify/react";
 import { Settings } from "./Settings";
+
+import { Slider } from "@/components/ui/slider";
 export function VideoPlayer() {
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
@@ -14,50 +16,69 @@ export function VideoPlayer() {
             <span className="absolute w-[14px] h-[14px] rounded-[50%] right-[-5px] top-[50%] translate-y-[-50%] bg-[inherit]"></span>
           </div>
         </div>
-        <div className="progress-controls flex justify-between items-center">
-          <div className="controls-left  flex justify-between items-center">
-            <span className="icon">
-              <Icon icon="material-symbols:replay-10" className="select-none" />
+        <div className="controls-list flex justify-between items-center w-[97%] h-[45px] mx-auto ">
+          <div className="controls-left flex items-center gap-2">
+            <span className="icon w-[30px]">
+              <Icon
+                icon="material-symbols:replay-10"
+                className="select-none cursor-pointer flex-shrink-0 text-[26px] transition duration-200 active:rotate-[-45deg]"
+              />
             </span>
-            <span className="icon">
+            <span className="icon w-[30px]">
               <Icon
                 icon="material-symbols:play-arrow"
-                className="select-none"
+                className="select-none cursor-pointer flex-shrink-0 text-[26px]"
               />
             </span>
-            <span className="icon">
+            <span className="icon w-[30px]">
               <Icon
                 icon="material-symbols:forward-10"
-                className="select-none"
+                className="select-none cursor-pointer flex-shrink-0 text-[26px] transition duration-200 active:rotate-[45deg]"
               />
             </span>
-            <span className="icon  flex justify-between items-center">
-              <Icon icon="material-symbols:volume-up" className="select-none" />
-              <input type="range" min="0" max="100" />
+            <span className="icon flex justify-between items-center w-[150px]">
+              <span className="icon w-[30px] flex-shrink-0">
+                <Icon
+                  icon="material-symbols:volume-up"
+                  className="select-none cursor-pointer text-[26px]"
+                />
+              </span>
+              <Slider
+                className="min-w-[0px] flex-grow-1 h-[3px]"
+                defaultValue={[33]}
+                max={100}
+                step={1}
+              />
             </span>
-            <div className="timer">
+            <div className="timer font-size-[12px] whitespace-nowrap ">
               <span className="current-time">0:00</span> /{" "}
               <span className="total-time">0:00</span>
             </div>
           </div>
 
-          <div className="controls-right  flex justify-between items-center">
+          <div className="controls-right flex justify-between items-center">
             <span className="icon">
-              <Icon icon="material-symbols:auto-play" className="select-none" />
+              <Icon
+                icon="material-symbols:auto-play"
+                className="select-none cursor-pointer text-[26px]"
+              />
             </span>
             <span className="icon">
-              <Icon icon="material-symbols:settings" className="select-none" />
+              <Icon
+                icon="material-symbols:settings"
+                className="select-none cursor-pointer text-[26px]"
+              />
             </span>
             <span className="icon">
               <Icon
                 icon="material-symbols:picture-in-picture-alt"
-                className="select-none"
+                className="select-none cursor-pointer text-[26px]"
               />
             </span>
             <span className="icon">
               <Icon
                 icon="material-symbols:fullscreen"
-                className="select-none"
+                className="select-none cursor-pointer text-[26px]"
               />
             </span>
           </div>
