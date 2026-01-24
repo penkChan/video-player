@@ -1,8 +1,18 @@
+"use client";
 import { Icon } from "@iconify/react";
 import { Settings } from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
+import { useState } from "react";
 export function VideoPlayer() {
+  const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
+
+  const handleVolumeWrapperMouseEnter = () => {
+    setisVolumeUpHovering(true);
+  };
+  const handleVolumeWrapperMouseLeave = () => {
+    setisVolumeUpHovering(false);
+  };
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
       <video
@@ -36,7 +46,11 @@ export function VideoPlayer() {
                 className="select-none cursor-pointer flex-shrink-0 text-[26px] transition duration-200 active:rotate-[45deg]"
               />
             </span>
-            <span className="icon flex justify-between items-center w-[150px]">
+            <span
+              className="icon inline-flex  items-center"
+              onMouseEnter={handleVolumeWrapperMouseEnter}
+              onMouseLeave={handleVolumeWrapperMouseLeave}
+            >
               <span className="icon w-[30px] flex-shrink-0">
                 <Icon
                   icon="material-symbols:volume-up"
@@ -44,7 +58,11 @@ export function VideoPlayer() {
                 />
               </span>
               <Slider
-                className="min-w-[0px] flex-grow-1 h-[3px]"
+                className={`h-[3px]  transition-all duration-200 ${
+                  isVolumeUpHovering
+                    ? "w-[100px]  opacity-100"
+                    : "w-[0px]  opacity-0"
+                }`}
                 defaultValue={[33]}
                 max={100}
                 step={1}
@@ -56,17 +74,21 @@ export function VideoPlayer() {
             </div>
           </div>
 
-          <div className="controls-right flex justify-between items-center">
+          <div className="controls-right flex justify-end items-center gap-2">
             <span className="icon">
-              <Icon
-                icon="material-symbols:auto-play"
-                className="select-none cursor-pointer text-[26px]"
-              />
+              <div className="select-none cursor-pointer text-[26px] w-[30px] h-[10px] rounded-[20px] relative bg-[#b6b6b6]">
+                <div className="absolute w-[17px] h-[17px] leading-[17px] left-[-5px] top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%]">
+                  <Icon
+                    icon="material-symbols:pause"
+                    className="select-none cursor-pointer text-[12px]"
+                  />
+                </div>
+              </div>
             </span>
             <span className="icon">
               <Icon
                 icon="material-symbols:settings"
-                className="select-none cursor-pointer text-[26px]"
+                className="select-none cursor-pointer text-[26px] transition-transform duration-300 hover:rotate-[45deg]"
               />
             </span>
             <span className="icon">
