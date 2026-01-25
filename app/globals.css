@@ -142,3 +142,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px; /* 垂直滚动条宽度 */
+  height: 8px; /* 水平滚动条高度 */
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: height(80px);
+  border: 2px solid transparent;
+  background-color: rgba(83, 83, 83, 0.29);
+  border-radius: 20px;
+}

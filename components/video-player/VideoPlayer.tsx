@@ -1,18 +1,23 @@
 "use client";
 import { Icon } from "@iconify/react";
-import { Settings } from "./Settings";
+import Settings from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 export function VideoPlayer() {
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
-
+  const [speed, setSpeed] = useState(1);
+  const [visiableSettings, setVisiableSettings] = useState(false); // 控制设置面板的显隐
   const handleVolumeWrapperMouseEnter = () => {
     setisVolumeUpHovering(true);
   };
   const handleVolumeWrapperMouseLeave = () => {
     setisVolumeUpHovering(false);
   };
+
+  const handleSpeedChange = useCallback((changedSpeed: number) => {
+    setSpeed(changedSpeed);
+  }, []);
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
       <video
@@ -47,7 +52,7 @@ export function VideoPlayer() {
               />
             </span>
             <span
-              className="icon inline-flex  items-center"
+              className="icon items-center hidden sm:inline-flex"
               onMouseEnter={handleVolumeWrapperMouseEnter}
               onMouseLeave={handleVolumeWrapperMouseLeave}
             >
@@ -91,7 +96,7 @@ export function VideoPlayer() {
                 className="select-none cursor-pointer text-[26px] transition-transform duration-300 hover:rotate-[45deg]"
               />
             </span>
-            <span className="icon">
+            <span className="icon hidden sm:block">
               <Icon
                 icon="material-symbols:picture-in-picture-alt"
                 className="select-none cursor-pointer text-[26px]"
@@ -106,7 +111,13 @@ export function VideoPlayer() {
           </div>
         </div>
 
-        <Settings className="absolute"></Settings>
+        {visiableSettings && (
+          <Settings
+            speed={speed}
+            onSpeedChange={handleSpeedChange}
+            className="absolute w-[200px] h-[250px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
+          ></Settings>
+        )}
       </div>
     </div>
   );
