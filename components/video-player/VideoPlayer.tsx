@@ -3,49 +3,186 @@ import { Icon } from "@iconify/react";
 import Settings from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 export function VideoPlayer() {
+  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [visiableSettings, setVisiableSettings] = useState(false); // 控制设置面板的显隐
+  const [isPaused, setIsPaused] = useState(true);
+  const [totalSeconds, setTotalSeconds] = useState("00"); // 视频总时长的秒数字符
+  const [totalMinutes, setTotalMinutes] = useState("00"); // 视频总时长的分钟数字符
+  const [currentSeconds, setCurrentSeconds] = useState("00"); // 视频当前时长的秒数字符
+  const [currentMinutes, setCurrentMinutes] = useState("00"); // 视频当前时长的分钟数字符
+  const [progressBarWidth, setProgressBarWidth] = useState("0%");
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const progressAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // 延迟加载视频，防止video loadedData事件触发太慢
+    const raf = requestAnimationFrame(() => {
+      setVideoSrc("/videos/coverr-a-road-through-the-hills-6377-1080p.mp4");
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  // 处理音量滑块显示
   const handleVolumeWrapperMouseEnter = () => {
     setisVolumeUpHovering(true);
   };
+  // 处理音量滑块隐藏
   const handleVolumeWrapperMouseLeave = () => {
     setisVolumeUpHovering(false);
   };
 
+  // 处理速度改变
   const handleSpeedChange = useCallback((changedSpeed: number) => {
     setSpeed(changedSpeed);
   }, []);
+
+  // 播放
+  const playVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPaused(false);
+    }
+  };
+
+  // 暂停
+  const pauseVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPaused(true);
+    }
+  };
+  // 处理播放暂停
+  const handlePlayToggle = () => {
+    if (videoRef.current) {
+      if (isPaused) {
+        playVideo();
+      } else {
+        pauseVideo();
+      }
+    }
+  };
+
+  // 监听播放
+  const handleVideoPlay = () => {
+    setIsPaused(false);
+  };
+  // 监听暂停
+  const handleVideoPause = () => {
+    setIsPaused(true);
+  };
+
+  // 处理快退10秒
+  const handleReplay10SecondsClick = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime -= 10;
+    }
+  };
+
+  // 处理快进10秒
+  const handeleForward10SecondsClick = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += 10;
+    }
+  };
+
+  // 处理视频加载完成
+  const handleVideoLoadedData = () => {
+    if (videoRef.current) {
+      const duration = videoRef.current.duration;
+      const totalMinutes = Math.floor(duration / 60);
+      const totalSeconds = Math.floor(duration % 60);
+      setTotalSeconds(
+        totalSeconds < 10 ? `0${totalSeconds}` : totalSeconds.toString(),
+      );
+      setTotalMinutes(totalMinutes.toString());
+    }
+  };
+
+  // 处理时间更新
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const currentTime = videoRef.current.currentTime;
+      const currentMinutes = Math.floor(currentTime / 60);
+      const currentSeconds = Math.floor(currentTime % 60);
+      setCurrentSeconds(
+        currentSeconds < 10 ? `0${currentSeconds}` : currentSeconds.toString(),
+      );
+      setCurrentMinutes(currentMinutes.toString());
+      setProgressBarWidth(
+        `${(currentTime / videoRef.current.duration) * 100}%`,
+      );
+    }
+  };
+  // 处理进度条点击
+  const handleProgressAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (progressAreaRef.current && videoRef.current) {
+      const progressAreaWidth = progressAreaRef.current?.offsetWidth;
+      const rect = progressAreaRef.current.getBoundingClientRect();
+      const clickPosition = e.clientX - rect.left;
+      videoRef.current.currentTime =
+        (clickPosition / progressAreaWidth) * videoRef.current.duration;
+    }
+  };
+
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
       <video
+        ref={videoRef}
         className="w-full h-full object-cover  relative "
-        src="/videos/coverr-a-road-through-the-hills-6377-1080p.mp4"
+        src={videoSrc}
+        onPlay={handleVideoPlay}
+        onPause={handleVideoPause}
+        onLoadedData={handleVideoLoadedData}
+        onTimeUpdate={handleTimeUpdate}
       ></video>
       <div className="progress-area-time"></div>
       <div className="controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white">
-        <div className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer">
-          <div className="progress-bar absolute w-[50%]  bg-[rgba(255,174,0)] h-[inherit] rounded-[inherit]">
+        <div
+          ref={progressAreaRef}
+          className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer"
+          onClick={handleProgressAreaClick}
+        >
+          <div
+            className="progress-bar absolute  bg-[rgba(255,174,0)] h-[inherit] rounded-[inherit]"
+            style={{
+              width: progressBarWidth,
+            }}
+          >
             <span className="absolute w-[14px] h-[14px] rounded-[50%] right-[-5px] top-[50%] translate-y-[-50%] bg-[inherit]"></span>
           </div>
         </div>
         <div className="controls-list flex justify-between items-center w-[97%] h-[45px] mx-auto ">
           <div className="controls-left flex items-center gap-2">
-            <span className="icon w-[30px]">
+            <span
+              className="icon w-[30px]"
+              onClick={handleReplay10SecondsClick}
+            >
               <Icon
                 icon="material-symbols:replay-10"
                 className="select-none cursor-pointer flex-shrink-0 text-[26px] transition duration-200 active:rotate-[-45deg]"
               />
             </span>
-            <span className="icon w-[30px]">
-              <Icon
-                icon="material-symbols:play-arrow"
-                className="select-none cursor-pointer flex-shrink-0 text-[26px]"
-              />
+            <span className="icon w-[30px]" onClick={handlePlayToggle}>
+              {isPaused ? (
+                <Icon
+                  icon="material-symbols:play-arrow"
+                  className="select-none cursor-pointer flex-shrink-0 text-[26px]"
+                />
+              ) : (
+                <Icon
+                  icon="material-symbols:pause"
+                  className="select-none cursor-pointer flex-shrink-0 text-[26px]"
+                />
+              )}
             </span>
-            <span className="icon w-[30px]">
+            <span
+              className="icon w-[30px]"
+              onClick={handeleForward10SecondsClick}
+            >
               <Icon
                 icon="material-symbols:forward-10"
                 className="select-none cursor-pointer flex-shrink-0 text-[26px] transition duration-200 active:rotate-[45deg]"
@@ -63,10 +200,10 @@ export function VideoPlayer() {
                 />
               </span>
               <Slider
-                className={`h-[3px]  transition-all duration-200 ${
+                className={`h-[3px] transition-all duration-200 ${
                   isVolumeUpHovering
-                    ? "w-[100px]  opacity-100"
-                    : "w-[0px]  opacity-0"
+                    ? "w-[100px] opacity-100"
+                    : "w-[0px] opacity-0"
                 }`}
                 defaultValue={[33]}
                 max={100}
@@ -74,8 +211,13 @@ export function VideoPlayer() {
               />
             </span>
             <div className="timer font-size-[12px] whitespace-nowrap ">
-              <span className="current-time">0:00</span> /{" "}
-              <span className="total-time">0:00</span>
+              <span className="current-time">
+                {currentMinutes}:{currentSeconds}
+              </span>
+              /
+              <span className="total-time">
+                {totalMinutes}:{totalSeconds}
+              </span>
             </div>
           </div>
 
