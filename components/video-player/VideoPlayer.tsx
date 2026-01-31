@@ -4,6 +4,7 @@ import Settings from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePlayerStore } from "@/stores/player.store";
 export function VideoPlayer() {
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
@@ -15,6 +16,8 @@ export function VideoPlayer() {
   const [currentSeconds, setCurrentSeconds] = useState("00"); // 视频当前时长的秒数字符
   const [currentMinutes, setCurrentMinutes] = useState("00"); // 视频当前时长的分钟数字符
   const [progressBarWidth, setProgressBarWidth] = useState("0%");
+  const volume = usePlayerStore((s) => s.volume);
+  const setVolume = usePlayerStore((s) => s.setVolume);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -22,7 +25,7 @@ export function VideoPlayer() {
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
     const raf = requestAnimationFrame(() => {
-      setVideoSrc("/videos/coverr-a-road-through-the-hills-6377-1080p.mp4");
+      setVideoSrc("/videos/hao-ri-zi.mp4");
     });
     return () => cancelAnimationFrame(raf);
   }, []);
@@ -128,6 +131,14 @@ export function VideoPlayer() {
     }
   };
 
+  // 处理音量改变
+  const handleVolumeChange = (volume: Array<number>) => {
+    setVolume(volume);
+    if (videoRef.current) {
+      videoRef.current.volume = volume[0] / 100;
+    }
+  };
+
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
       <video
@@ -205,9 +216,10 @@ export function VideoPlayer() {
                     ? "w-[100px] opacity-100"
                     : "w-[0px] opacity-0"
                 }`}
-                defaultValue={[33]}
                 max={100}
                 step={1}
+                value={volume}
+                onValueChange={handleVolumeChange}
               />
             </span>
             <div className="timer font-size-[12px] whitespace-nowrap ">

@@ -1,5 +1,12 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Overview
+
+this is a custom video-player for next.js, restruct from tutorial from native javascript to next.js,
+tutorial https://www.youtube.com/watch?v=Ntd6lzohOTQ
+use shadcn/ui slider https://ui.shadcn.com/docs/components/radix/slider
+use zustand for state management https://zustand.docs.pmnd.rs/getting-started/introduction
+
 ## Getting Started
 
 First, run the development server:
