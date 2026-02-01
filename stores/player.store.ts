@@ -9,7 +9,7 @@ type PlayerState = {
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set) => ({
-      volume: [60],
+      volume: [40],
       setVolume: (volume) => set({ volume }),
     }),
     {

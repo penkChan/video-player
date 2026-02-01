@@ -16,6 +16,7 @@ export function VideoPlayer() {
   const [currentSeconds, setCurrentSeconds] = useState("00"); // 视频当前时长的秒数字符
   const [currentMinutes, setCurrentMinutes] = useState("00"); // 视频当前时长的分钟数字符
   const [progressBarWidth, setProgressBarWidth] = useState("0%"); // 进度条的宽度
+  const [isMuted, setIsMuted] = useState(false);
 
   const volume = usePlayerStore((s) => s.volume);
   const setVolume = usePlayerStore((s) => s.setVolume);
@@ -31,15 +32,13 @@ export function VideoPlayer() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const volumnIconName = useMemo(
+  const volumeIconName = useMemo(
     () =>
-      `material-symbols:${
-        volume[0] === 0
-          ? "volume-off"
-          : volume[0] < 40
-            ? "volume-down"
-            : "volume-up"
-      }`,
+      volume[0] === 0
+        ? "volume-off"
+        : volume[0] < 40
+          ? "volume-down"
+          : "volume-up",
     [volume],
   );
 
@@ -153,7 +152,20 @@ export function VideoPlayer() {
 
   // 处理音量改变
   const handleVolumeChange = (volume: Array<number>) => {
+    if (volume[0] !== 0) {
+      setIsMuted(false);
+    } else {
+      setIsMuted(true);
+    }
     setVolume(volume);
+  };
+
+  // 处理音量图标点击
+  const handleVolumeIconClick = () => {
+    if (isMuted && volume[0] === 0) {
+      setVolume([40]);
+    }
+    setIsMuted(!isMuted);
   };
 
   return (
@@ -223,8 +235,9 @@ export function VideoPlayer() {
             >
               <span className="icon w-[30px] flex-shrink-0">
                 <Icon
-                  icon={volumnIconName}
+                  icon={`material-symbols:${isMuted ? "volume-off" : volumeIconName}`}
                   className="select-none cursor-pointer text-[26px]"
+                  onClick={handleVolumeIconClick}
                 />
               </span>
               <Slider
@@ -235,7 +248,7 @@ export function VideoPlayer() {
                 }`}
                 max={100}
                 step={1}
-                value={volume}
+                value={isMuted ? [0] : volume}
                 onValueChange={handleVolumeChange}
               />
             </span>
