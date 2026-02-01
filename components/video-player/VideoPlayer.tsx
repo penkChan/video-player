@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import Settings from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
 export function VideoPlayer() {
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
@@ -15,7 +15,8 @@ export function VideoPlayer() {
   const [totalMinutes, setTotalMinutes] = useState("00"); // 视频总时长的分钟数字符
   const [currentSeconds, setCurrentSeconds] = useState("00"); // 视频当前时长的秒数字符
   const [currentMinutes, setCurrentMinutes] = useState("00"); // 视频当前时长的分钟数字符
-  const [progressBarWidth, setProgressBarWidth] = useState("0%");
+  const [progressBarWidth, setProgressBarWidth] = useState("0%"); // 进度条的宽度
+
   const volume = usePlayerStore((s) => s.volume);
   const setVolume = usePlayerStore((s) => s.setVolume);
 
@@ -29,6 +30,25 @@ export function VideoPlayer() {
     });
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  const volumnIconName = useMemo(
+    () =>
+      `material-symbols:${
+        volume[0] === 0
+          ? "volume-off"
+          : volume[0] < 40
+            ? "volume-down"
+            : "volume-up"
+      }`,
+    [volume],
+  );
+
+  useEffect(() => {
+    if (videoRef.current !== null) {
+      videoRef.current.volume = volume[0] / 100;
+    }
+  }, [volume]);
+
   // 处理音量滑块显示
   const handleVolumeWrapperMouseEnter = () => {
     setisVolumeUpHovering(true);
@@ -134,9 +154,6 @@ export function VideoPlayer() {
   // 处理音量改变
   const handleVolumeChange = (volume: Array<number>) => {
     setVolume(volume);
-    if (videoRef.current) {
-      videoRef.current.volume = volume[0] / 100;
-    }
   };
 
   return (
@@ -206,7 +223,7 @@ export function VideoPlayer() {
             >
               <span className="icon w-[30px] flex-shrink-0">
                 <Icon
-                  icon="material-symbols:volume-up"
+                  icon={volumnIconName}
                   className="select-none cursor-pointer text-[26px]"
                 />
               </span>
