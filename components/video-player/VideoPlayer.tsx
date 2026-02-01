@@ -162,8 +162,18 @@ export function VideoPlayer() {
 
   // 处理音量图标点击
   const handleVolumeIconClick = () => {
-    if (isMuted && volume[0] === 0) {
-      setVolume([40]);
+    if (isMuted) {
+      if (volume[0] === 0) {
+        setVolume([40]);
+      } else {
+        if (videoRef.current) {
+          videoRef.current.volume = volume[0] / 100;
+        }
+      }
+    } else {
+      if (videoRef.current) {
+        videoRef.current.volume = 0;
+      }
     }
     setIsMuted(!isMuted);
   };
