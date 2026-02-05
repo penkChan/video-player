@@ -17,12 +17,15 @@ export function VideoPlayer() {
   const [currentMinutes, setCurrentMinutes] = useState("00"); // 视频当前时长的分钟数字符
   const [progressBarWidth, setProgressBarWidth] = useState("0%"); // 进度条的宽度
   const [isMuted, setIsMuted] = useState(false);
-
+  const [progressAreaTimeLeft, setProgressAreaTimeLeft] = useState("0px"); // 进度条时间提示框的左偏移量
+  const [showProgressAreaTime, setShowProgressAreaTime] = useState(false); //  显示进度条时间提示框
+  const [progressAreaTime, setProgressAreaTime] = useState("0:00"); // 进度条时间提示框显示的时间
   const volume = usePlayerStore((s) => s.volume);
   const setVolume = usePlayerStore((s) => s.setVolume);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
+  const progressAreaTimeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
@@ -178,6 +181,29 @@ export function VideoPlayer() {
     setIsMuted(!isMuted);
   };
 
+  const handleProgressAreaClickMouseMove = (
+    e: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    setShowProgressAreaTime(true);
+    if (progressAreaRef.current !== null && videoRef.current !== null) {
+      const progressWidth = progressAreaRef.current.clientWidth || 0;
+      const rect = progressAreaRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      setProgressAreaTimeLeft(`${x}px`);
+      const duration = videoRef.current.duration;
+      const currentTime = (x / progressWidth) * duration;
+      const totalMinutes = Math.floor(currentTime / 60);
+      const totalSeconds = Math.floor(currentTime % 60);
+      setProgressAreaTime(
+        `${totalMinutes}:${totalSeconds < 10 ? `0${totalSeconds}` : totalSeconds}`,
+      );
+    }
+  };
+
+  const handleProgressAreaClickMouseLeave = () => {
+    setShowProgressAreaTime(false);
+  };
+
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
       <video
@@ -193,9 +219,21 @@ export function VideoPlayer() {
       <div className="controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white">
         <div
           ref={progressAreaRef}
-          className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer"
+          className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer "
           onClick={handleProgressAreaClick}
+          onMouseMove={handleProgressAreaClickMouseMove}
+          onMouseLeave={handleProgressAreaClickMouseLeave}
         >
+          {showProgressAreaTime && (
+            <div
+              ref={progressAreaTimeRef}
+              className="absolute bottom-[20px] min-w-[50px] min-h-[20px] py-[5px] px-[10px] text-[#fff] text-[14px] bg-[#002333] rounded-[5px] z-1 translate-x-[-50%]"
+              style={{ left: progressAreaTimeLeft }}
+            >
+              {progressAreaTime}
+              <div className="absolute bottom-[-50%] left-[50%] translate-[-50%] rotate-[45deg] bg-[#002333] w-[15px] h-[15px] z-[-1]"></div>
+            </div>
+          )}
           <div
             className="progress-bar absolute  bg-[rgba(255,174,0)] h-[inherit] rounded-[inherit]"
             style={{
