@@ -206,16 +206,25 @@ export function VideoPlayer() {
     }
   };
 
+  // 处理进度条移开
   const handleProgressAreaClickMouseLeave = () => {
     setShowProgressAreaTime(false);
   };
 
+  // 处理视频播放结束
   const handleVideoOnEnded = () => {
     if (autoPlayActive) {
       playVideo();
       setIsEnded(false);
     } else {
       setIsEnded(true);
+    }
+  };
+
+  // 处理画中画
+  const handlePictureInPictureClick = () => {
+    if (videoRef.current) {
+      videoRef.current.requestPictureInPicture();
     }
   };
 
@@ -360,7 +369,10 @@ export function VideoPlayer() {
                 className="select-none cursor-pointer text-[26px] transition-transform duration-300 hover:rotate-[45deg]"
               />
             </span>
-            <span className="icon hidden sm:block">
+            <span
+              className="icon hidden sm:block"
+              onClick={handlePictureInPictureClick}
+            >
               <Icon
                 icon="material-symbols:picture-in-picture-alt"
                 className="select-none cursor-pointer text-[26px]"
