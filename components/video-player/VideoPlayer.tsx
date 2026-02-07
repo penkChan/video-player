@@ -20,6 +20,8 @@ export function VideoPlayer() {
   const [progressAreaTimeLeft, setProgressAreaTimeLeft] = useState("0px"); // 进度条时间提示框的左偏移量
   const [showProgressAreaTime, setShowProgressAreaTime] = useState(false); //  显示进度条时间提示框
   const [progressAreaTime, setProgressAreaTime] = useState("0:00"); // 进度条时间提示框显示的时间
+  const [autoPlayActive, setAutoPlayActive] = useState(false); // 自动播放按钮状态
+  const [isEnded, setIsEnded] = useState(false); // 视频是否播放结束
   const volume = usePlayerStore((s) => s.volume);
   const setVolume = usePlayerStore((s) => s.setVolume);
 
@@ -181,6 +183,10 @@ export function VideoPlayer() {
     setIsMuted(!isMuted);
   };
 
+  const handleAutoPlayClick = () => {
+    setAutoPlayActive(!autoPlayActive);
+  };
+
   const handleProgressAreaClickMouseMove = (
     e: React.MouseEvent<HTMLDivElement>,
   ) => {
@@ -204,6 +210,15 @@ export function VideoPlayer() {
     setShowProgressAreaTime(false);
   };
 
+  const handleVideoOnEnded = () => {
+    if (autoPlayActive) {
+      playVideo();
+      setIsEnded(false);
+    } else {
+      setIsEnded(true);
+    }
+  };
+
   return (
     <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
       <video
@@ -214,6 +229,7 @@ export function VideoPlayer() {
         onPause={handleVideoPause}
         onLoadedData={handleVideoLoadedData}
         onTimeUpdate={handleTimeUpdate}
+        onEnded={handleVideoOnEnded}
       ></video>
       <div className="progress-area-time"></div>
       <div className="controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white">
@@ -257,7 +273,7 @@ export function VideoPlayer() {
             <span className="icon w-[30px]" onClick={handlePlayToggle}>
               {isPaused ? (
                 <Icon
-                  icon="material-symbols:play-arrow"
+                  icon={`material-symbols:${isEnded ? "replay" : "play-arrow"}`}
                   className="select-none cursor-pointer flex-shrink-0 text-[26px]"
                 />
               ) : (
@@ -313,12 +329,28 @@ export function VideoPlayer() {
 
           <div className="controls-right flex justify-end items-center gap-2">
             <span className="icon">
-              <div className="select-none cursor-pointer text-[26px] w-[30px] h-[10px] rounded-[20px] relative bg-[#b6b6b6]">
-                <div className="absolute w-[17px] h-[17px] leading-[17px] left-[-5px] top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%]">
-                  <Icon
-                    icon="material-symbols:pause"
-                    className="select-none cursor-pointer text-[12px]"
-                  />
+              <div
+                className="select-none cursor-pointer text-[26px] w-[30px] h-[10px] rounded-[20px] relative bg-[#b6b6b6]"
+                onClick={handleAutoPlayClick}
+              >
+                <div
+                  className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${
+                    autoPlayActive
+                      ? "left-auto right-[-5px]"
+                      : "left-[-5px] right-0"
+                  }`}
+                >
+                  {autoPlayActive ? (
+                    <Icon
+                      icon="material-symbols:pause"
+                      className="select-none cursor-pointer text-[12px]"
+                    />
+                  ) : (
+                    <Icon
+                      icon="material-symbols:play-arrow"
+                      className="select-none cursor-pointer text-[12px]"
+                    />
+                  )}
                 </div>
               </div>
             </span>
