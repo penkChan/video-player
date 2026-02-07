@@ -30,14 +30,7 @@ export function VideoPlayer() {
   const progressAreaRef = useRef<HTMLDivElement>(null);
   const progressAreaTimeRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // 延迟加载视频，防止video loadedData事件触发太慢
-    const raf = requestAnimationFrame(() => {
-      setVideoSrc("/videos/hao-ri-zi.mp4");
-    });
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const volumeIconName = useMemo(
     () =>
@@ -50,10 +43,43 @@ export function VideoPlayer() {
   );
 
   useEffect(() => {
+    // 延迟加载视频，防止video loadedData事件触发太慢
+    const raf = requestAnimationFrame(() => {
+      setVideoSrc("/videos/hao-ri-zi.mp4");
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target as Node)
+      ) {
+        setVisiableSettings(false);
+      }
+    };
+
+    if (visiableSettings) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [visiableSettings]);
+
+  useEffect(() => {
     if (videoRef.current !== null) {
       videoRef.current.volume = volume[0] / 100;
     }
   }, [volume]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+  });
 
   // 处理音量滑块显示
   const handleVolumeWrapperMouseEnter = () => {
@@ -185,10 +211,11 @@ export function VideoPlayer() {
     setIsMuted(!isMuted);
   };
 
+  // 处理自动播放点击
   const handleAutoPlayClick = () => {
     setAutoPlayActive(!autoPlayActive);
   };
-
+  // 处理进度条点击
   const handleProgressAreaClickMouseMove = (
     e: React.MouseEvent<HTMLDivElement>,
   ) => {
@@ -234,7 +261,7 @@ export function VideoPlayer() {
     }
   };
 
-  //
+  // 处理全屏
   const handleFullScreenClick = () => {
     if (mainVideoRef.current) {
       if (isFullScreen) {
@@ -245,6 +272,12 @@ export function VideoPlayer() {
         setIsFullScreen(true);
       }
     }
+  };
+
+  // 处理设置点击
+  const handleSettingClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    setVisiableSettings(!visiableSettings);
   };
 
   return (
@@ -385,7 +418,7 @@ export function VideoPlayer() {
                 </div>
               </div>
             </span>
-            <span className="icon">
+            <span className="icon" onClick={handleSettingClick}>
               <Icon
                 icon="material-symbols:settings"
                 className="select-none cursor-pointer text-[26px] transition-transform duration-300 hover:rotate-[45deg]"
@@ -418,6 +451,7 @@ export function VideoPlayer() {
 
         {visiableSettings && (
           <Settings
+            ref={settingsRef}
             speed={speed}
             onSpeedChange={handleSpeedChange}
             className="absolute w-[200px] h-[250px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
