@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import Settings from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
 export function VideoPlayer() {
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
@@ -22,12 +22,14 @@ export function VideoPlayer() {
   const [progressAreaTime, setProgressAreaTime] = useState("0:00"); // 进度条时间提示框显示的时间
   const [autoPlayActive, setAutoPlayActive] = useState(false); // 自动播放按钮状态
   const [isEnded, setIsEnded] = useState(false); // 视频是否播放结束
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const volume = usePlayerStore((s) => s.volume);
   const setVolume = usePlayerStore((s) => s.setVolume);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
   const progressAreaTimeRef = useRef<HTMLDivElement>(null);
+  const mainVideoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
@@ -223,13 +225,33 @@ export function VideoPlayer() {
 
   // 处理画中画
   const handlePictureInPictureClick = () => {
+    if (isFullScreen) {
+      document.exitFullscreen();
+      setIsFullScreen(false);
+    }
     if (videoRef.current) {
       videoRef.current.requestPictureInPicture();
     }
   };
 
+  //
+  const handleFullScreenClick = () => {
+    if (mainVideoRef.current) {
+      if (isFullScreen) {
+        document.exitFullscreen();
+        setIsFullScreen(false);
+      } else {
+        mainVideoRef.current.requestFullscreen();
+        setIsFullScreen(true);
+      }
+    }
+  };
+
   return (
-    <div className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500">
+    <div
+      ref={mainVideoRef}
+      className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500"
+    >
       <video
         ref={videoRef}
         className="w-full h-full object-cover  relative "
@@ -378,11 +400,18 @@ export function VideoPlayer() {
                 className="select-none cursor-pointer text-[26px]"
               />
             </span>
-            <span className="icon">
-              <Icon
-                icon="material-symbols:fullscreen"
-                className="select-none cursor-pointer text-[26px]"
-              />
+            <span className="icon" onClick={handleFullScreenClick}>
+              {isFullScreen ? (
+                <Icon
+                  icon="material-symbols:fullscreen-exit"
+                  className="select-none cursor-pointer text-[26px]"
+                />
+              ) : (
+                <Icon
+                  icon="material-symbols:fullscreen"
+                  className="select-none cursor-pointer text-[26px]"
+                />
+              )}
             </span>
           </div>
         </div>
