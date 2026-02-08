@@ -22,9 +22,10 @@ export function VideoPlayer() {
   const [progressAreaTime, setProgressAreaTime] = useState("0:00"); // 进度条时间提示框显示的时间
   const [autoPlayActive, setAutoPlayActive] = useState(false); // 自动播放按钮状态
   const [isEnded, setIsEnded] = useState(false); // 视频是否播放结束
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const volume = usePlayerStore((s) => s.volume);
-  const setVolume = usePlayerStore((s) => s.setVolume);
+  const [isFullScreen, setIsFullScreen] = useState(false); // 全屏按钮状态
+  const [showControls, setShowControls] = useState(false); // 控制控制条显隐
+  const volume = usePlayerStore((s) => s.volume); // 音量
+  const setVolume = usePlayerStore((s) => s.setVolume); // 设置音量
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -280,10 +281,31 @@ export function VideoPlayer() {
     setVisiableSettings(!visiableSettings);
   };
 
+  // 处理主视频右键
+  const handleMainVideoOnContextMenu = (
+    event: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    event.preventDefault();
+  };
+
+  // 处理主视频鼠标移入 显示控制栏
+  const handleMainVideoOnMouseEnter = () => {
+    setShowControls(true);
+  };
+
+  // 处理主视频鼠标移出 隐藏控制栏
+  const handleMainVideoOnMouseLeave = () => {
+    setShowControls(false);
+    setVisiableSettings(false);
+  };
+
   return (
     <div
       ref={mainVideoRef}
       className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500"
+      onContextMenu={handleMainVideoOnContextMenu}
+      onMouseEnter={handleMainVideoOnMouseEnter}
+      onMouseLeave={handleMainVideoOnMouseLeave}
     >
       <video
         ref={videoRef}
@@ -296,7 +318,9 @@ export function VideoPlayer() {
         onEnded={handleVideoOnEnded}
       ></video>
       <div className="progress-area-time"></div>
-      <div className="controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white">
+      <div
+        className={`controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white duration-[0.3s] ${showControls ? "translate-y-[0px]" : "translate-y-[110%]"}`}
+      >
         <div
           ref={progressAreaRef}
           className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer "
