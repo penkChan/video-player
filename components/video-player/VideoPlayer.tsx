@@ -26,6 +26,7 @@ export function VideoPlayer() {
   const [showControls, setShowControls] = useState(false); // 控制控制条显隐
   const volume = usePlayerStore((s) => s.volume); // 音量
   const setVolume = usePlayerStore((s) => s.setVolume); // 设置音量
+  const [bufferedBarWidth, setBufferedBarWidth] = useState("0%"); // 缓冲条的宽度
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -46,11 +47,16 @@ export function VideoPlayer() {
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
     const raf = requestAnimationFrame(() => {
-      setVideoSrc("/videos/hao-ri-zi.mp4");
+      setVideoSrc("/videos/hao-ri-zi.mp4"); // 测试视频(public)
+      // 测试视频(url from google)
+      // setVideoSrc(
+      //   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      // );
     });
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  // 处理点击外部点击事件，关闭设置面板
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -70,17 +76,33 @@ export function VideoPlayer() {
     };
   }, [visiableSettings]);
 
+  // 处理音量改变
   useEffect(() => {
     if (videoRef.current !== null) {
       videoRef.current.volume = volume[0] / 100;
     }
   }, [volume]);
 
+  // 处理速度改变
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.playbackRate = speed;
     }
   });
+  
+  // 处理缓冲进度
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (videoRef.current) {
+        const bufferedTime = videoRef.current.buffered.end(0);
+        const duration = videoRef.current.duration;
+        const width = (bufferedTime / duration) * 100;
+
+        setBufferedBarWidth(`${width}%`);
+      }
+    }, 500);
+    return () => clearInterval(intervalId);
+  }, []);
 
   // 处理音量滑块显示
   const handleVolumeWrapperMouseEnter = () => {
@@ -323,7 +345,7 @@ export function VideoPlayer() {
       >
         <div
           ref={progressAreaRef}
-          className="progress-area relative w-full h-[5px] bg-[#f0f0f0] cursor-pointer "
+          className="progress-area relative w-full h-[5px] bg-[#f0f0f07c] cursor-pointer "
           onClick={handleProgressAreaClick}
           onMouseMove={handleProgressAreaClickMouseMove}
           onMouseLeave={handleProgressAreaClickMouseLeave}
@@ -346,6 +368,10 @@ export function VideoPlayer() {
           >
             <span className="absolute w-[14px] h-[14px] rounded-[50%] right-[-5px] top-[50%] translate-y-[-50%] bg-[inherit]"></span>
           </div>
+          <span
+            className="absolute top-[0px] h-[inherit] rounded-[inherit] bg-[rgb(206,206,206)] cursor-pointer z-[-1]"
+            style={{ width: bufferedBarWidth }}
+          ></span>
         </div>
         <div className="controls-list flex justify-between items-center w-[97%] h-[45px] mx-auto ">
           <div className="controls-left flex items-center gap-2">
