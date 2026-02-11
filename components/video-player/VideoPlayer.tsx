@@ -5,8 +5,10 @@ import Settings from "./Settings";
 import { Slider } from "@/components/ui/slider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
+import useSWR from "swr";
+import { request } from "@/utils/fetcher";
+
 export function VideoPlayer() {
-  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [visiableSettings, setVisiableSettings] = useState(false); // 控制设置面板的显隐
@@ -44,16 +46,23 @@ export function VideoPlayer() {
           : "volume-up",
     [volume],
   );
-
+  // "/videos/hao-ri-zi.mp4" // 测试视频(public)
+  // "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  const { data: videoData } = useSWR(
+    {
+      url: "/videos/hao-ri-zi.mp4",
+      options: { headers: undefined },
+    },
+    request,
+  );
+  const videoSrc = useMemo(() => {
+    if (videoData) {
+      return URL.createObjectURL(videoData as Blob);
+    }
+  }, [videoData]); // 依赖数组为空，只在挂载时执行一次
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
-    const raf = requestAnimationFrame(() => {
-      setVideoSrc("/videos/hao-ri-zi.mp4"); // 测试视频(public)
-      // 测试视频(url from google)
-      // setVideoSrc(
-      //   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      // );
-    });
+    const raf = requestAnimationFrame(() => {});
     return () => cancelAnimationFrame(raf);
   }, []);
 
@@ -329,7 +338,7 @@ export function VideoPlayer() {
   return (
     <div
       ref={mainVideoRef}
-      className="video-player flex justify-center items-center w-4xl h-2xl relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500"
+      className="video-player flex justify-center items-center w-4xl h-[500px] relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500"
       onContextMenu={handleMainVideoOnContextMenu}
       onMouseEnter={handleMainVideoOnMouseEnter}
       onMouseLeave={handleMainVideoOnMouseLeave}
@@ -337,11 +346,11 @@ export function VideoPlayer() {
       <video
         ref={videoRef}
         className="w-full h-full object-cover  relative "
-        src={videoSrc}
         onPlay={handleVideoPlay}
         onPause={handleVideoPause}
         onLoadedData={handleVideoLoadedData}
         onTimeUpdate={handleTimeUpdate}
+        src={videoSrc}
         onEnded={handleVideoOnEnded}
       ></video>
       <div className="progress-area-time"></div>
