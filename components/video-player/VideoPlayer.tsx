@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import Settings from "./Settings";
 
 import { Slider } from "@/components/ui/slider";
-import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
 export function VideoPlayer() {
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
@@ -33,6 +33,7 @@ export function VideoPlayer() {
   const progressAreaTimeRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout>(null);
 
   const volumeIconName = useMemo(
     () =>
@@ -54,6 +55,15 @@ export function VideoPlayer() {
       // );
     });
     return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // 清除定时器
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, []);
 
   // 处理点击外部点击事件，关闭设置面板
@@ -88,21 +98,7 @@ export function VideoPlayer() {
     if (videoRef.current) {
       videoRef.current.playbackRate = speed;
     }
-  });
-  
-  // 处理缓冲进度
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (videoRef.current) {
-        const bufferedTime = videoRef.current.buffered.end(0);
-        const duration = videoRef.current.duration;
-        const width = (bufferedTime / duration) * 100;
-
-        setBufferedBarWidth(`${width}%`);
-      }
-    }, 500);
-    return () => clearInterval(intervalId);
-  }, []);
+  }, [speed]);
 
   // 处理音量滑块显示
   const handleVolumeWrapperMouseEnter = () => {
@@ -177,6 +173,15 @@ export function VideoPlayer() {
         totalSeconds < 10 ? `0${totalSeconds}` : totalSeconds.toString(),
       );
       setTotalMinutes(totalMinutes.toString());
+      timerRef.current = setInterval(() => {
+        if (videoRef.current) {
+          const bufferedTime = videoRef.current.buffered.end(0);
+          const duration = videoRef.current.duration;
+          const width = (bufferedTime / duration) * 100;
+
+          setBufferedBarWidth(`${width}%`);
+        }
+      }, 500);
     }
   };
 
