@@ -5,8 +5,8 @@ import Settings from "./Settings";
 import { Slider } from "@/components/ui/slider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
-import useSWR from "swr";
-import { request } from "@/utils/fetcher";
+// import useSWR from "swr";
+// import { request } from "@/utils/fetcher";
 
 export function VideoPlayer() {
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
@@ -29,6 +29,7 @@ export function VideoPlayer() {
   const volume = usePlayerStore((s) => s.volume); // 音量
   const setVolume = usePlayerStore((s) => s.setVolume); // 设置音量
   const [bufferedBarWidth, setBufferedBarWidth] = useState("0%"); // 缓冲条的宽度
+  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -47,22 +48,27 @@ export function VideoPlayer() {
     [volume],
   );
   // "/videos/hao-ri-zi.mp4" // 测试视频(public)
+  // https://github.com/mediaelement/mediaelement-files/blob/master/big_buck_bunny.mp4?raw=true
   // "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-  const { data: videoData } = useSWR(
-    {
-      url: "/videos/hao-ri-zi.mp4",
-      options: { headers: undefined },
-    },
-    request,
-  );
-  const videoSrc = useMemo(() => {
-    if (videoData) {
-      return URL.createObjectURL(videoData as Blob);
-    }
-  }, [videoData]); // 依赖数组为空，只在挂载时执行一次
+  // const { data: videoData } = useSWR(
+  //   {
+  //     url: "https://github.com/mediaelement/mediaelement-files/blob/master/big_buck_bunny.mp4?raw=true",
+  //     options: { headers: undefined },
+  //   },
+  //   request,
+  // );
+  // const videoSrc = useMemo(() => {
+  //   if (videoData) {
+  //     return URL.createObjectURL(videoData as Blob);
+  //   }
+  // }, [videoData]); // 依赖数组为空，只在挂载时执行一次
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
-    const raf = requestAnimationFrame(() => {});
+    const raf = requestAnimationFrame(() => {
+      setVideoSrc(
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      );
+    });
     return () => cancelAnimationFrame(raf);
   }, []);
 
@@ -352,7 +358,16 @@ export function VideoPlayer() {
         onTimeUpdate={handleTimeUpdate}
         src={videoSrc}
         onEnded={handleVideoOnEnded}
-      ></video>
+        crossOrigin="anonymous"
+      >
+        <track
+          kind="subtitles"
+          src="./vtts/BigBuckBunnyAcapella.vtt"
+          srcLang="en"
+          label="English"
+          default
+        />
+      </video>
       <div className="progress-area-time"></div>
       <div
         className={`controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white duration-[0.3s] ${showControls ? "translate-y-[0px]" : "translate-y-[110%]"}`}
@@ -481,6 +496,12 @@ export function VideoPlayer() {
                   )}
                 </div>
               </div>
+            </span>
+            <span className="icon hidden sm:block">
+              <Icon
+                icon="material-symbols:closed-caption"
+                className="select-none cursor-pointer text-[26px]"
+              />
             </span>
             <span className="icon" onClick={handleSettingClick}>
               <Icon
