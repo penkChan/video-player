@@ -1,18 +1,20 @@
 "use client";
 import { Icon } from "@iconify/react";
 import Settings from "./Settings";
+import Captions from "./Captions";
 
 import { Slider } from "@/components/ui/slider";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
 // import useSWR from "swr";
 // import { request } from "@/utils/fetcher";
 
 export function VideoPlayer() {
-  const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false); // 音量滑块显示
+  const [speed, setSpeed] = useState(1); // 播放速度
   const [visiableSettings, setVisiableSettings] = useState(false); // 控制设置面板的显隐
-  const [isPaused, setIsPaused] = useState(true);
+  const [isPaused, setIsPaused] = useState(true); //  播放暂停
   const [totalSeconds, setTotalSeconds] = useState("00"); // 视频总时长的秒数字符
   const [totalMinutes, setTotalMinutes] = useState("00"); // 视频总时长的分钟数字符
   const [currentSeconds, setCurrentSeconds] = useState("00"); // 视频当前时长的秒数字符
@@ -29,13 +31,16 @@ export function VideoPlayer() {
   const volume = usePlayerStore((s) => s.volume); // 音量
   const setVolume = usePlayerStore((s) => s.setVolume); // 设置音量
   const [bufferedBarWidth, setBufferedBarWidth] = useState("0%"); // 缓冲条的宽度
-  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined);
+  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined); // 视频源
+  const [captionType, setCaptionType] = useState("English"); // 字幕类型
+  const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
   const progressAreaTimeRef = useRef<HTMLDivElement>(null);
   const mainVideoRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const captionsRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout>(null);
 
   const volumeIconName = useMemo(
@@ -81,7 +86,7 @@ export function VideoPlayer() {
     };
   }, []);
 
-  // 处理点击外部点击事件，关闭设置面板
+  // 处理点击外部点击事件，关闭设置面板, 关闭字幕面板
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -90,16 +95,20 @@ export function VideoPlayer() {
       ) {
         setVisiableSettings(false);
       }
+      if (
+        captionsRef.current &&
+        !captionsRef.current.contains(event.target as Node)
+      ) {
+        setVisiableCaptions(false);
+      }
     };
 
-    if (visiableSettings) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [visiableSettings]);
+  }, []);
 
   // 处理音量改变
   useEffect(() => {
@@ -127,6 +136,11 @@ export function VideoPlayer() {
   // 处理速度改变
   const handleSpeedChange = useCallback((changedSpeed: number) => {
     setSpeed(changedSpeed);
+  }, []);
+
+  /// 处理字幕类型改变
+  const handleCaptionTypeChange = useCallback((changedCaptionType: string) => {
+    setCaptionType(changedCaptionType);
   }, []);
 
   // 播放
@@ -323,6 +337,12 @@ export function VideoPlayer() {
     setVisiableSettings(!visiableSettings);
   };
 
+  // 处理字幕点击
+  const handleCaptionTypeClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    setVisiableCaptions(!visiableCaptions);
+  };
+
   // 处理主视频右键
   const handleMainVideoOnContextMenu = (
     event: React.MouseEvent<HTMLDivElement>,
@@ -339,6 +359,7 @@ export function VideoPlayer() {
   const handleMainVideoOnMouseLeave = () => {
     setShowControls(false);
     setVisiableSettings(false);
+    setVisiableCaptions(false);
   };
 
   return (
@@ -497,7 +518,10 @@ export function VideoPlayer() {
                 </div>
               </div>
             </span>
-            <span className="icon hidden sm:block">
+            <span
+              className="icon hidden sm:block"
+              onClick={handleCaptionTypeClick}
+            >
               <Icon
                 icon="material-symbols:closed-caption"
                 className="select-none cursor-pointer text-[26px]"
@@ -534,6 +558,14 @@ export function VideoPlayer() {
           </div>
         </div>
 
+        {visiableCaptions && (
+          <Captions
+            ref={captionsRef}
+            captionType={captionType}
+            onCaptionTypeChange={handleCaptionTypeChange}
+            className="absolute w-[200px] h-[250px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
+          ></Captions>
+        )}
         {visiableSettings && (
           <Settings
             ref={settingsRef}
