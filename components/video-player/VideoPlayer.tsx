@@ -10,6 +10,12 @@ import { usePlayerStore } from "@/stores/player.store";
 // import useSWR from "swr";
 // import { request } from "@/utils/fetcher";
 
+export interface Track {
+  label: string;
+  src: string;
+  srcLang: string;
+}
+
 export function VideoPlayer() {
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false); // 音量滑块显示
   const [speed, setSpeed] = useState(1); // 播放速度
@@ -32,8 +38,10 @@ export function VideoPlayer() {
   const setVolume = usePlayerStore((s) => s.setVolume); // 设置音量
   const [bufferedBarWidth, setBufferedBarWidth] = useState("0%"); // 缓冲条的宽度
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined); // 视频源
-  const [captionType, setCaptionType] = useState("English"); // 字幕类型
-  const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐
+  const [captionType, setCaptionType] = useState("OFF"); // 字幕类型
+  const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐、
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [subtitle, setSubtitle] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -42,6 +50,9 @@ export function VideoPlayer() {
   const settingsRef = useRef<HTMLDivElement>(null);
   const captionsRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout>(null);
+
+  const activeTrackRef = useRef<TextTrack | null>(null); //  当前激活的字幕
+  const cueHandlerRef = useRef<((e: Event) => void) | null>(null); /// 字幕cueHandler
 
   const volumeIconName = useMemo(
     () =>
@@ -73,6 +84,31 @@ export function VideoPlayer() {
       setVideoSrc(
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
       );
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    // 延迟加载视频，防止video loadedData事件触发太慢
+    const raf = requestAnimationFrame(() => {
+      setTracks([
+        {
+          label: "English",
+          srcLang: "en",
+          src: "/vtts/BigBuckBunnyAcapella-en.vtt",
+        },
+        {
+          label: "中文",
+          srcLang: "zh",
+          src: "/vtts/BigBuckBunnyAcapella-zh.vtt",
+        },
+      ]);
+      if (videoRef.current) {
+        const tracks = videoRef.current.textTracks;
+        for (let i = 0; i < tracks.length; i++) {
+          tracks[i].mode = "hidden";
+        }
+      }
     });
     return () => cancelAnimationFrame(raf);
   }, []);
@@ -124,6 +160,10 @@ export function VideoPlayer() {
     }
   }, [speed]);
 
+  const captionTypes = useMemo(() => {
+    return ["OFF", ...tracks.map((track) => track.label)];
+  }, [tracks]);
+
   // 处理音量滑块显示
   const handleVolumeWrapperMouseEnter = () => {
     setisVolumeUpHovering(true);
@@ -142,6 +182,48 @@ export function VideoPlayer() {
   const handleCaptionTypeChange = useCallback((changedCaptionType: string) => {
     setCaptionType(changedCaptionType);
   }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const tracks = video.textTracks;
+
+    // ✅ 清理旧 track
+    if (activeTrackRef.current && cueHandlerRef.current) {
+      activeTrackRef.current.removeEventListener(
+        "cuechange",
+        cueHandlerRef.current,
+      );
+    }
+
+    if (captionType === "OFF") {
+      activeTrackRef.current = null;
+      return;
+    }
+
+    const track = Array.from(tracks).find((t) => t.label === captionType);
+
+    if (!track) return;
+
+    track.mode = "hidden";
+
+    const handler = () => {
+      const active = track.activeCues;
+      setSubtitle(
+        active && active.length > 0 ? (active[0] as VTTCue).text : "",
+      );
+    };
+    handler(); // 切换时候执行一次
+
+    track.addEventListener("cuechange", handler);
+
+    activeTrackRef.current = track;
+    cueHandlerRef.current = handler;
+    return () => {
+      track.removeEventListener("cuechange", handler);
+    };
+  }, [captionType]);
 
   // 播放
   const playVideo = () => {
@@ -381,18 +463,26 @@ export function VideoPlayer() {
         onEnded={handleVideoOnEnded}
         crossOrigin="anonymous"
       >
-        <track
-          kind="subtitles"
-          src="./vtts/BigBuckBunnyAcapella.vtt"
-          srcLang="en"
-          label="English"
-          default
-        />
+        {tracks.map((trackItem) => (
+          <track
+            key={trackItem.src}
+            kind="subtitle"
+            src={trackItem.src}
+            srcLang={trackItem.srcLang}
+            label={trackItem.label}
+          />
+        ))}
       </video>
+
       <div className="progress-area-time"></div>
       <div
         className={`controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white duration-[0.3s] ${showControls ? "translate-y-[0px]" : "translate-y-[110%]"}`}
       >
+        {captionType !== "OFF" && (
+          <p className="absolute left-[50%] top-[0] width-[90%] max-width-[90%] translate-x-[-50%] translate-y-[-150%] text-center select-none transition-[bottom] duration-300 ">
+            {subtitle}
+          </p>
+        )}
         <div
           ref={progressAreaRef}
           className="progress-area relative w-full h-[5px] bg-[#f0f0f07c] cursor-pointer "
@@ -562,6 +652,7 @@ export function VideoPlayer() {
           <Captions
             ref={captionsRef}
             captionType={captionType}
+            captionTypes={captionTypes}
             onCaptionTypeChange={handleCaptionTypeChange}
             className="absolute w-[200px] h-[250px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
           ></Captions>

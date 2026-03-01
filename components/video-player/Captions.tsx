@@ -3,11 +3,11 @@ import { Icon } from "@iconify/react";
 import React, { forwardRef } from "react";
 export interface CaptionsProps extends React.HTMLAttributes<HTMLDivElement> {
   captionType: string;
+  captionTypes: string[];
   onCaptionTypeChange: (speed: string) => void;
 }
 const Captions = forwardRef<HTMLDivElement, CaptionsProps>(
-  ({ className, captionType, onCaptionTypeChange }, ref) => {
-    const captionTypes = ["OFF", "English", "Urdu"];
+  ({ className, captionType, captionTypes, onCaptionTypeChange }, ref) => {
     return (
       <div ref={ref} className={clsx("settings", className)}>
         <div className="playback">
