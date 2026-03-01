@@ -54,6 +54,9 @@ export function VideoPlayer() {
   const activeTrackRef = useRef<TextTrack | null>(null); //  当前激活的字幕
   const cueHandlerRef = useRef<((e: Event) => void) | null>(null); /// 字幕cueHandler
 
+  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null); // 控制控制条隐藏的定时器
+  const hideControlsDelay = 3000; // 2秒隐藏
+
   const volumeIconName = useMemo(
     () =>
       volume[0] === 0
@@ -66,18 +69,7 @@ export function VideoPlayer() {
   // "/videos/hao-ri-zi.mp4" // 测试视频(public)
   // https://github.com/mediaelement/mediaelement-files/blob/master/big_buck_bunny.mp4?raw=true
   // "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-  // const { data: videoData } = useSWR(
-  //   {
-  //     url: "https://github.com/mediaelement/mediaelement-files/blob/master/big_buck_bunny.mp4?raw=true",
-  //     options: { headers: undefined },
-  //   },
-  //   request,
-  // );
-  // const videoSrc = useMemo(() => {
-  //   if (videoData) {
-  //     return URL.createObjectURL(videoData as Blob);
-  //   }
-  // }, [videoData]); // 依赖数组为空，只在挂载时执行一次
+
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
     const raf = requestAnimationFrame(() => {
@@ -118,6 +110,9 @@ export function VideoPlayer() {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
       }
     };
   }, []);
@@ -431,10 +426,28 @@ export function VideoPlayer() {
   ) => {
     event.preventDefault();
   };
+  // 重置控制栏定时器
+  const resetControlsTimer = useCallback(() => {
+    setShowControls(true);
 
+    if (hideControlsTimerRef.current) {
+      clearTimeout(hideControlsTimerRef.current);
+    }
+
+    hideControlsTimerRef.current = setTimeout(() => {
+      setShowControls(false);
+      setVisiableSettings(false);
+      setVisiableCaptions(false);
+    }, hideControlsDelay);
+  }, []);
   // 处理主视频鼠标移入 显示控制栏
   const handleMainVideoOnMouseEnter = () => {
-    setShowControls(true);
+    resetControlsTimer();
+  };
+
+  // 处理主视频鼠标移动
+  const handleMainVideoOnMouseMove = () => {
+    resetControlsTimer();
   };
 
   // 处理主视频鼠标移出 隐藏控制栏
@@ -447,9 +460,10 @@ export function VideoPlayer() {
   return (
     <div
       ref={mainVideoRef}
-      className="video-player flex justify-center items-center w-4xl h-[500px] relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500"
+      className={`video-player flex justify-center items-center w-4xl h-[500px] relative rounded-xs outline-none overflow-hidden shadow-sm shadow-gray-500 ${showControls ? "cursor-auto" : "cursor-none"}`}
       onContextMenu={handleMainVideoOnContextMenu}
       onMouseEnter={handleMainVideoOnMouseEnter}
+      onMouseMove={handleMainVideoOnMouseMove}
       onMouseLeave={handleMainVideoOnMouseLeave}
     >
       <video
