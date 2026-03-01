@@ -40,8 +40,8 @@ export function VideoPlayer() {
   const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined); // 视频源
   const [captionType, setCaptionType] = useState("OFF"); // 字幕类型
   const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐、
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [subtitle, setSubtitle] = useState<string | null>(null);
+  const [tracks, setTracks] = useState<Track[]>([]); // 字幕列表
+  const [subtitle, setSubtitle] = useState<string | null>(null); // 当前字幕
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -349,15 +349,30 @@ export function VideoPlayer() {
   const handleAutoPlayClick = () => {
     setAutoPlayActive(!autoPlayActive);
   };
-  // 处理进度条点击
-  const handleProgressAreaClickMouseMove = (
-    e: React.MouseEvent<HTMLDivElement>,
-  ) => {
+  // 处理进度条移动
+  const handleProgressAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     setShowProgressAreaTime(true);
-    if (progressAreaRef.current !== null && videoRef.current !== null) {
+    if (
+      progressAreaRef.current !== null &&
+      videoRef.current !== null &&
+      progressAreaTimeRef.current !== null &&
+      mainVideoRef.current !== null
+    ) {
       const progressWidth = progressAreaRef.current.clientWidth || 0;
       const rect = progressAreaRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
+      let x = e.clientX - rect.left;
+      if (x < progressAreaTimeRef.current.clientWidth / 2) {
+        x = progressAreaTimeRef.current.clientWidth / 2;
+      } else if (
+        x >
+        mainVideoRef.current.clientWidth -
+          progressAreaTimeRef.current.clientWidth / 2
+      ) {
+        x =
+          mainVideoRef.current.clientWidth -
+          progressAreaTimeRef.current.clientWidth / 2;
+      }
+
       setProgressAreaTimeLeft(`${x}px`);
       const duration = videoRef.current.duration;
       const currentTime = (x / progressWidth) * duration;
@@ -370,7 +385,7 @@ export function VideoPlayer() {
   };
 
   // 处理进度条移开
-  const handleProgressAreaClickMouseLeave = () => {
+  const handleProgressAreaMouseLeave = () => {
     setShowProgressAreaTime(false);
   };
 
@@ -438,6 +453,7 @@ export function VideoPlayer() {
       setShowControls(false);
       setVisiableSettings(false);
       setVisiableCaptions(false);
+      setShowProgressAreaTime(false);
     }, hideControlsDelay);
   }, []);
   // 处理主视频鼠标移入 显示控制栏
@@ -455,6 +471,7 @@ export function VideoPlayer() {
     setShowControls(false);
     setVisiableSettings(false);
     setVisiableCaptions(false);
+    setShowProgressAreaTime(false);
   };
 
   return (
@@ -488,7 +505,6 @@ export function VideoPlayer() {
         ))}
       </video>
 
-      <div className="progress-area-time"></div>
       <div
         className={`controls absolute bottom-0 left-0 right-0 h-[50px] w-full bg-[rgba(0,0,0,0.7)] shadow-[0_0_40px_10px_rgba(0,0,0,0.25)] z-3 translate-y-0 text-white duration-[0.3s] ${showControls ? "translate-y-[0px]" : "translate-y-[110%]"}`}
       >
@@ -501,19 +517,20 @@ export function VideoPlayer() {
           ref={progressAreaRef}
           className="progress-area relative w-full h-[5px] bg-[#f0f0f07c] cursor-pointer "
           onClick={handleProgressAreaClick}
-          onMouseMove={handleProgressAreaClickMouseMove}
-          onMouseLeave={handleProgressAreaClickMouseLeave}
+          onMouseMove={handleProgressAreaMouseMove}
+          onMouseLeave={handleProgressAreaMouseLeave}
         >
-          {showProgressAreaTime && (
-            <div
-              ref={progressAreaTimeRef}
-              className="absolute bottom-[20px] min-w-[50px] min-h-[20px] py-[5px] px-[10px] text-[#fff] text-[14px] bg-[#002333] rounded-[5px] z-1 translate-x-[-50%]"
-              style={{ left: progressAreaTimeLeft }}
-            >
+          <div
+            ref={progressAreaTimeRef}
+            className={ `absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"}` }
+            style={{ left: progressAreaTimeLeft }}
+          >
+            <div className="w-[150px] h-[90px] bg-[#fff] border-2 border-solid border-[#fff] rounded-[3px] bottom-[10px] left-[50%]"></div>
+
+            <div className="inline-flex min-w-[50px] min-h-[20px] py-[5px] px-[10px] text-[#fff] text-[14px] rounded-[5px] z-1">
               {progressAreaTime}
-              <div className="absolute bottom-[-50%] left-[50%] translate-[-50%] rotate-[45deg] bg-[#002333] w-[15px] h-[15px] z-[-1]"></div>
             </div>
-          )}
+          </div>
           <div
             className="progress-bar absolute  bg-[rgba(255,174,0)] h-[inherit] rounded-[inherit]"
             style={{
