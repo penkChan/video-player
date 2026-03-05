@@ -42,6 +42,8 @@ export function VideoPlayer() {
   const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐、
   const [tracks, setTracks] = useState<Track[]>([]); // 字幕列表
   const [subtitle, setSubtitle] = useState<string | null>(null); // 当前字幕
+  const [thumbnailBackgroundPosition, setThumbnailBackgroundPosition] = useState<string>('0px 0px')
+  const [thumbnailBackgroundImage, setThumbnailBackgroundImage] = useState<string | undefined>(undefined)
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -76,6 +78,7 @@ export function VideoPlayer() {
       setVideoSrc(
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
       );
+      setThumbnailBackgroundImage("url(/images/BigBuckBunnyAcapellaSprite.jpg)")
     });
     return () => cancelAnimationFrame(raf);
   }, []);
@@ -351,6 +354,10 @@ export function VideoPlayer() {
   };
   // 处理进度条移动
   const handleProgressAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const cols = 10
+    const thumbWidth = 160
+    const thumbHeight = 90
+
     setShowProgressAreaTime(true);
     if (
       progressAreaRef.current !== null &&
@@ -360,27 +367,37 @@ export function VideoPlayer() {
     ) {
       const progressWidth = progressAreaRef.current.clientWidth || 0;
       const rect = progressAreaRef.current.getBoundingClientRect();
-      let x = e.clientX - rect.left;
-      if (x < progressAreaTimeRef.current.clientWidth / 2) {
-        x = progressAreaTimeRef.current.clientWidth / 2;
+      const x = e.clientX - rect.left;
+      let left = x;
+      // 调整缩略图位置
+      if (left < progressAreaTimeRef.current.clientWidth / 2) {
+        left = progressAreaTimeRef.current.clientWidth / 2;
       } else if (
-        x >
+        left >
         mainVideoRef.current.clientWidth -
         progressAreaTimeRef.current.clientWidth / 2
       ) {
-        x =
+        left =
           mainVideoRef.current.clientWidth -
           progressAreaTimeRef.current.clientWidth / 2;
       }
 
-      setProgressAreaTimeLeft(`${x}px`);
+      setProgressAreaTimeLeft(`${left}px`);
+      // 
+      // 调整显示的时间
       const duration = videoRef.current.duration;
       const currentTime = (x / progressWidth) * duration;
-      const totalMinutes = Math.floor(currentTime / 60);
-      const totalSeconds = Math.floor(currentTime % 60);
+      const currentMinutes = Math.floor(currentTime / 60);
+      const currentSeconds = Math.floor(currentTime % 60);
       setProgressAreaTime(
-        `${totalMinutes}:${totalSeconds < 10 ? `0${totalSeconds}` : totalSeconds}`,
+        `${currentMinutes}:${currentSeconds < 10 ? `0${currentSeconds}` : currentSeconds}`,
       );
+      const frame = Math.floor(currentTime / 5) // 每5秒一帧
+      const spriteX = frame % cols
+      const spriteY = Math.floor(frame / cols)
+
+      setThumbnailBackgroundPosition(`-${spriteX * thumbWidth}px -${spriteY * thumbHeight}px`)
+
     }
   };
 
@@ -525,7 +542,8 @@ export function VideoPlayer() {
             className={`absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"}`}
             style={{ left: progressAreaTimeLeft }}
           >
-            <div className="w-[150px] h-[90px] bg-[#fff] border-2 border-solid border-[#fff] rounded-[3px] bottom-[10px] left-[50%]"></div>
+            <div className="w-[160px] h-[90px] bg-white border-2 border-solid border-[#fff] rounded-[3px] bottom-[10px] left-[50%] bg-no-repeat"
+              style={{ backgroundPosition: thumbnailBackgroundPosition, backgroundImage: thumbnailBackgroundImage }}></div>
 
             <div className="inline-flex min-w-[50px] min-h-[20px] py-[5px] px-[10px] text-[#fff] text-[14px] rounded-[5px] z-1">
               {progressAreaTime}
