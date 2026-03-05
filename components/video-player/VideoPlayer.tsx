@@ -280,8 +280,8 @@ export function VideoPlayer() {
       );
       setTotalMinutes(totalMinutes.toString());
       timerRef.current = setInterval(() => {
-        if (videoRef.current) {
-          const bufferedTime = videoRef.current.buffered.end(0);
+        if (videoRef.current && videoRef.current.buffered.length !== 0) {
+          const bufferedTime = videoRef.current.buffered.end(videoRef.current.buffered.length - 1)
           const duration = videoRef.current.duration;
           const width = (bufferedTime / duration) * 100;
 
@@ -366,7 +366,7 @@ export function VideoPlayer() {
       } else if (
         x >
         mainVideoRef.current.clientWidth -
-          progressAreaTimeRef.current.clientWidth / 2
+        progressAreaTimeRef.current.clientWidth / 2
       ) {
         x =
           mainVideoRef.current.clientWidth -
@@ -522,7 +522,7 @@ export function VideoPlayer() {
         >
           <div
             ref={progressAreaTimeRef}
-            className={ `absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"}` }
+            className={`absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"}`}
             style={{ left: progressAreaTimeLeft }}
           >
             <div className="w-[150px] h-[90px] bg-[#fff] border-2 border-solid border-[#fff] rounded-[3px] bottom-[10px] left-[50%]"></div>
@@ -590,11 +590,10 @@ export function VideoPlayer() {
                 />
               </span>
               <Slider
-                className={`h-[3px] transition-all duration-200 ${
-                  isVolumeUpHovering
-                    ? "w-[100px] opacity-100"
-                    : "w-[0px] opacity-0"
-                }`}
+                className={`h-[3px] transition-all duration-200 ${isVolumeUpHovering
+                  ? "w-[100px] opacity-100"
+                  : "w-[0px] opacity-0"
+                  }`}
                 max={100}
                 step={1}
                 value={isMuted ? [0] : volume}
@@ -619,11 +618,10 @@ export function VideoPlayer() {
                 onClick={handleAutoPlayClick}
               >
                 <div
-                  className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${
-                    autoPlayActive
-                      ? "left-auto right-[-5px]"
-                      : "left-[-5px] right-0"
-                  }`}
+                  className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${autoPlayActive
+                    ? "left-auto right-[-5px]"
+                    : "left-[-5px] right-0"
+                    }`}
                 >
                   {autoPlayActive ? (
                     <Icon
