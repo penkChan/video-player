@@ -1,5 +1,4 @@
-import Image from "next/image";
-import { VideoPlayer } from "@/components/video-player/VideoPlayer";
+import { VideoPlayer } from "@/features/video-player/VideoPlayer";
 
 export default function Home() {
   return (
