@@ -355,6 +355,7 @@ export function VideoPlayer() {
   // 处理进度条移动
   const handleProgressAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const cols = 10
+    const rows = 10
     const thumbWidth = 160
     const thumbHeight = 90
 
@@ -392,7 +393,7 @@ export function VideoPlayer() {
       setProgressAreaTime(
         `${currentMinutes}:${currentSeconds < 10 ? `0${currentSeconds}` : currentSeconds}`,
       );
-      const frame = Math.floor(currentTime / 5) // 每5秒一帧
+      const frame = Math.min(Math.floor(currentTime / 5),  cols * rows - 1) // 每5秒一帧 且不能超过最大帧数
       const spriteX = frame % cols
       const spriteY = Math.floor(frame / cols)
 
