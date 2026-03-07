@@ -196,6 +196,19 @@ export function Controls({
     };
   }, [captionType, videoRef]);
 
+  // 监听全屏状态 退出全屏更新state状态
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+    };
+  }, []);
+
   const captionTypes = useMemo(() => {
     return ["OFF", ...tracks.map((track) => track.label)];
   }, [tracks]);
