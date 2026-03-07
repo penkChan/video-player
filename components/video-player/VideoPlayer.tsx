@@ -5,8 +5,10 @@ import Captions from "./Captions";
 
 import { Slider } from "@/components/ui/slider";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayerStore } from "@/stores/player.store";
+import { Spinner } from "../ui/spinner";
+import { set } from "lodash";
 // import useSWR from "swr";
 // import { request } from "@/utils/fetcher";
 
@@ -42,8 +44,12 @@ export function VideoPlayer() {
   const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐、
   const [tracks, setTracks] = useState<Track[]>([]); // 字幕列表
   const [subtitle, setSubtitle] = useState<string | null>(null); // 当前字幕
-  const [thumbnailBackgroundPosition, setThumbnailBackgroundPosition] = useState<string>('0px 0px')
-  const [thumbnailBackgroundImage, setThumbnailBackgroundImage] = useState<string | undefined>(undefined)
+  const [thumbnailBackgroundPosition, setThumbnailBackgroundPosition] =
+    useState<string>("0px 0px");
+  const [thumbnailBackgroundImage, setThumbnailBackgroundImage] = useState<
+    string | undefined
+  >(undefined);
+  const [spinnerVisible, setSpinnerVisible] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -78,7 +84,9 @@ export function VideoPlayer() {
       setVideoSrc(
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
       );
-      setThumbnailBackgroundImage("url(/images/BigBuckBunnyAcapellaSprite.jpg)")
+      setThumbnailBackgroundImage(
+        "url(/images/BigBuckBunnyAcapellaSprite.jpg)",
+      );
     });
     return () => cancelAnimationFrame(raf);
   }, []);
@@ -284,7 +292,9 @@ export function VideoPlayer() {
       setTotalMinutes(totalMinutes.toString());
       timerRef.current = setInterval(() => {
         if (videoRef.current && videoRef.current.buffered.length !== 0) {
-          const bufferedTime = videoRef.current.buffered.end(videoRef.current.buffered.length - 1)
+          const bufferedTime = videoRef.current.buffered.end(
+            videoRef.current.buffered.length - 1,
+          );
           const duration = videoRef.current.duration;
           const width = (bufferedTime / duration) * 100;
 
@@ -354,10 +364,10 @@ export function VideoPlayer() {
   };
   // 处理进度条移动
   const handleProgressAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const cols = 10
-    const rows = 10
-    const thumbWidth = 160
-    const thumbHeight = 90
+    const cols = 10;
+    const rows = 10;
+    const thumbWidth = 160;
+    const thumbHeight = 90;
 
     setShowProgressAreaTime(true);
     if (
@@ -376,7 +386,7 @@ export function VideoPlayer() {
       } else if (
         left >
         mainVideoRef.current.clientWidth -
-        progressAreaTimeRef.current.clientWidth / 2
+          progressAreaTimeRef.current.clientWidth / 2
       ) {
         left =
           mainVideoRef.current.clientWidth -
@@ -384,7 +394,7 @@ export function VideoPlayer() {
       }
 
       setProgressAreaTimeLeft(`${left}px`);
-      // 
+      //
       // 调整显示的时间
       const duration = videoRef.current.duration;
       const currentTime = (x / progressWidth) * duration;
@@ -393,12 +403,13 @@ export function VideoPlayer() {
       setProgressAreaTime(
         `${currentMinutes}:${currentSeconds < 10 ? `0${currentSeconds}` : currentSeconds}`,
       );
-      const frame = Math.min(Math.floor(currentTime / 5),  cols * rows - 1) // 每5秒一帧 且不能超过最大帧数
-      const spriteX = frame % cols
-      const spriteY = Math.floor(frame / cols)
+      const frame = Math.min(Math.floor(currentTime / 5), cols * rows - 1); // 每5秒一帧 且不能超过最大帧数
+      const spriteX = frame % cols;
+      const spriteY = Math.floor(frame / cols);
 
-      setThumbnailBackgroundPosition(`-${spriteX * thumbWidth}px -${spriteY * thumbHeight}px`)
-
+      setThumbnailBackgroundPosition(
+        `-${spriteX * thumbWidth}px -${spriteY * thumbHeight}px`,
+      );
     }
   };
 
@@ -408,7 +419,7 @@ export function VideoPlayer() {
   };
 
   // 处理视频播放结束
-  const handleVideoOnEnded = () => {
+  const handleVideoEnded = () => {
     if (autoPlayActive) {
       playVideo();
       setIsEnded(false);
@@ -492,6 +503,14 @@ export function VideoPlayer() {
     setShowProgressAreaTime(false);
   };
 
+  const handleVideoWaiting = () => {
+    setSpinnerVisible(true);
+  };
+
+  const handleVideoCanPlay = () => {
+    setSpinnerVisible(false);
+  };
+
   return (
     <div
       ref={mainVideoRef}
@@ -501,6 +520,9 @@ export function VideoPlayer() {
       onMouseMove={handleMainVideoOnMouseMove}
       onMouseLeave={handleMainVideoOnMouseLeave}
     >
+      {spinnerVisible && (
+        <Spinner className="size-8 absolute left-[50%] top-[50%]  translate-x-[-50%] translate-y-[-50%] z-10"></Spinner>
+      )}
       <video
         ref={videoRef}
         className="w-full h-full object-cover  relative "
@@ -509,7 +531,9 @@ export function VideoPlayer() {
         onLoadedData={handleVideoLoadedData}
         onTimeUpdate={handleTimeUpdate}
         src={videoSrc}
-        onEnded={handleVideoOnEnded}
+        onEnded={handleVideoEnded}
+        onWaiting={handleVideoWaiting}
+        onCanPlay={handleVideoCanPlay}
         crossOrigin="anonymous"
       >
         {tracks.map((trackItem) => (
@@ -543,8 +567,13 @@ export function VideoPlayer() {
             className={`absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"}`}
             style={{ left: progressAreaTimeLeft }}
           >
-            <div className="w-[160px] h-[90px] bg-white border-2 border-solid border-[#fff] rounded-[3px] bottom-[10px] left-[50%] bg-no-repeat"
-              style={{ backgroundPosition: thumbnailBackgroundPosition, backgroundImage: thumbnailBackgroundImage }}></div>
+            <div
+              className="w-[160px] h-[90px] bg-white border-2 border-solid border-[#fff] rounded-[3px] bottom-[10px] left-[50%] bg-no-repeat"
+              style={{
+                backgroundPosition: thumbnailBackgroundPosition,
+                backgroundImage: thumbnailBackgroundImage,
+              }}
+            ></div>
 
             <div className="inline-flex min-w-[50px] min-h-[20px] py-[5px] px-[10px] text-[#fff] text-[14px] rounded-[5px] z-1">
               {progressAreaTime}
@@ -609,10 +638,11 @@ export function VideoPlayer() {
                 />
               </span>
               <Slider
-                className={`h-[3px] transition-all duration-200 ${isVolumeUpHovering
-                  ? "w-[100px] opacity-100"
-                  : "w-[0px] opacity-0"
-                  }`}
+                className={`h-[3px] transition-all duration-200 ${
+                  isVolumeUpHovering
+                    ? "w-[100px] opacity-100"
+                    : "w-[0px] opacity-0"
+                }`}
                 max={100}
                 step={1}
                 value={isMuted ? [0] : volume}
@@ -637,10 +667,11 @@ export function VideoPlayer() {
                 onClick={handleAutoPlayClick}
               >
                 <div
-                  className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${autoPlayActive
-                    ? "left-auto right-[-5px]"
-                    : "left-[-5px] right-0"
-                    }`}
+                  className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${
+                    autoPlayActive
+                      ? "left-auto right-[-5px]"
+                      : "left-[-5px] right-0"
+                  }`}
                 >
                   {autoPlayActive ? (
                     <Icon
