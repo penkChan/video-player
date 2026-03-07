@@ -50,6 +50,8 @@ export function VideoPlayer() {
     string | undefined
   >(undefined);
   const [spinnerVisible, setSpinnerVisible] = useState(false);
+  const [isProgressThumbPointerDown, setIsProgressThumbPointerDown] =
+    useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressAreaRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,7 @@ export function VideoPlayer() {
   const settingsRef = useRef<HTMLDivElement>(null);
   const captionsRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout>(null);
+  const progressThumb = useRef<HTMLSpanElement>(null);
 
   const activeTrackRef = useRef<TextTrack | null>(null); //  当前激活的字幕
   const cueHandlerRef = useRef<((e: Event) => void) | null>(null); /// 字幕cueHandler
@@ -306,7 +309,7 @@ export function VideoPlayer() {
 
   // 处理时间更新
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
+    if (!isProgressThumbPointerDown && videoRef.current) {
       const currentTime = videoRef.current.currentTime;
       const currentMinutes = Math.floor(currentTime / 60);
       const currentSeconds = Math.floor(currentTime % 60);
@@ -363,7 +366,9 @@ export function VideoPlayer() {
     setAutoPlayActive(!autoPlayActive);
   };
   // 处理进度条移动
-  const handleProgressAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleProgressAreaPointerMove = (
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
     const cols = 10;
     const rows = 10;
     const thumbWidth = 160;
@@ -394,7 +399,6 @@ export function VideoPlayer() {
       }
 
       setProgressAreaTimeLeft(`${left}px`);
-      //
       // 调整显示的时间
       const duration = videoRef.current.duration;
       const currentTime = (x / progressWidth) * duration;
@@ -410,11 +414,17 @@ export function VideoPlayer() {
       setThumbnailBackgroundPosition(
         `-${spriteX * thumbWidth}px -${spriteY * thumbHeight}px`,
       );
+      if (isProgressThumbPointerDown) {
+        const progressAreaWidth = progressAreaRef.current?.offsetWidth;
+        const rect = progressAreaRef.current.getBoundingClientRect();
+        const clickPosition = e.clientX - rect.left;
+        setProgressBarWidth(`${(clickPosition / progressAreaWidth) * 100}%`);
+      }
     }
   };
 
   // 处理进度条移开
-  const handleProgressAreaMouseLeave = () => {
+  const handleProgressAreaPointerLeave = () => {
     setShowProgressAreaTime(false);
   };
 
@@ -511,6 +521,36 @@ export function VideoPlayer() {
     setSpinnerVisible(false);
   };
 
+  const handleProgressThumbPointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    if (progressThumb.current) {
+      progressThumb.current.setPointerCapture(event.pointerId);
+    }
+
+    setIsProgressThumbPointerDown(true);
+  };
+
+  const handleProgressAreaPointerUp = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    if (progressThumb.current) {
+      progressThumb.current.releasePointerCapture(event.pointerId);
+    }
+    if (
+      isProgressThumbPointerDown &&
+      progressAreaRef.current &&
+      videoRef.current
+    ) {
+      const progressAreaWidth = progressAreaRef.current?.offsetWidth;
+      const rect = progressAreaRef.current.getBoundingClientRect();
+      const clickPosition = event.clientX - rect.left;
+      videoRef.current.currentTime =
+        (clickPosition / progressAreaWidth) * videoRef.current.duration;
+    }
+    setIsProgressThumbPointerDown(false);
+  };
+
   return (
     <div
       ref={mainVideoRef}
@@ -559,12 +599,13 @@ export function VideoPlayer() {
           ref={progressAreaRef}
           className="progress-area relative w-full h-[5px] bg-[#f0f0f07c] cursor-pointer "
           onClick={handleProgressAreaClick}
-          onMouseMove={handleProgressAreaMouseMove}
-          onMouseLeave={handleProgressAreaMouseLeave}
+          onPointerMove={handleProgressAreaPointerMove}
+          onPointerLeave={handleProgressAreaPointerLeave}
+          onPointerUp={handleProgressAreaPointerUp}
         >
           <div
             ref={progressAreaTimeRef}
-            className={`absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"}`}
+            className={`absolute bottom-[20px] w-[150px] flex flex-col gap-[5px] items-center translate-x-[-50%] ${showProgressAreaTime ? "opacity-100" : "opacity-0"} select-none`}
             style={{ left: progressAreaTimeLeft }}
           >
             <div
@@ -585,7 +626,11 @@ export function VideoPlayer() {
               width: progressBarWidth,
             }}
           >
-            <span className="absolute w-[14px] h-[14px] rounded-[50%] right-[-5px] top-[50%] translate-y-[-50%] bg-[inherit]"></span>
+            <span
+              ref={progressThumb}
+              className="absolute w-[14px] h-[14px] rounded-[50%] right-[-5px] top-[50%] translate-y-[-50%] bg-[inherit]"
+              onPointerDown={handleProgressThumbPointerDown}
+            ></span>
           </div>
           <span
             className="absolute top-[0px] h-[inherit] rounded-[inherit] bg-[rgb(206,206,206)] cursor-pointer z-[-1]"
