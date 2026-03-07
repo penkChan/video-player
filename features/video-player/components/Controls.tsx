@@ -35,7 +35,6 @@ export interface ControlsProps
   visiableCaptions: boolean;
   setVisiableCaptions: Dispatch<SetStateAction<boolean>>;
   tracks: Track[];
-  setTracks: Dispatch<SetStateAction<Track[]>>;
   showControls: boolean;
   playVideo: () => void;
   pauseVideo: () => void;
@@ -56,7 +55,6 @@ export function Controls({
   visiableCaptions,
   setVisiableCaptions,
   tracks,
-  setTracks,
   showControls,
   isProgressThumbPointerDown,
   setIsProgressThumbPointerDown,
@@ -91,30 +89,7 @@ export function Controls({
   const activeTrackRef = useRef<TextTrack | null>(null); //  当前激活的字幕
   const cueHandlerRef = useRef<((e: Event) => void) | null>(null); /// 字幕cueHandlerS
 
-  useEffect(() => {
-    // 延迟加载视频，防止video loadedData事件触发太慢
-    const raf = requestAnimationFrame(() => {
-      setTracks([
-        {
-          label: "English",
-          srcLang: "en",
-          src: "/vtts/BigBuckBunnyAcapella-en.vtt",
-        },
-        {
-          label: "中文",
-          srcLang: "zh",
-          src: "/vtts/BigBuckBunnyAcapella-zh.vtt",
-        },
-      ]);
-      if (videoRef.current) {
-        const tracks = videoRef.current.textTracks;
-        for (let i = 0; i < tracks.length; i++) {
-          tracks[i].mode = "hidden";
-        }
-      }
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [setTracks, videoRef]);
+
 
   // 处理点击外部点击事件，关闭设置面板, 关闭字幕面板
   useEffect(() => {

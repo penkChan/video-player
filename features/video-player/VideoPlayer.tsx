@@ -70,6 +70,31 @@ export function VideoPlayer() {
     };
   }, []);
 
+  useEffect(() => {
+    // 延迟加载字幕，防止video loadedData事件触发太慢
+    const raf = requestAnimationFrame(() => {
+      setTracks([
+        {
+          label: "English",
+          srcLang: "en",
+          src: "/vtts/BigBuckBunnyAcapella-en.vtt",
+        },
+        {
+          label: "中文",
+          srcLang: "zh",
+          src: "/vtts/BigBuckBunnyAcapella-zh.vtt",
+        },
+      ]);
+      if (videoRef.current) {
+        const tracks = videoRef.current.textTracks;
+        for (let i = 0; i < tracks.length; i++) {
+          tracks[i].mode = "hidden";
+        }
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   // 监听播放
   const handleVideoPlay = () => {
     setIsPaused(false);
