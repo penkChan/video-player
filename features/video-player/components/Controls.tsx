@@ -462,7 +462,7 @@ export function Controls({
           ref={settingsRef}
           speed={speed}
           onSpeedChange={handleSpeedChange}
-          className="absolute w-[200px] h-[250px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
+          className="absolute w-[200px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
         ></Settings>
       )}
     </div>

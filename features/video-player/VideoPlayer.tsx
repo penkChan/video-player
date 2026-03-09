@@ -267,7 +267,6 @@ export function VideoPlayer() {
         setVisiableCaptions={setVisiableCaptions}
         setIsPaused={setIsPaused}
         tracks={tracks}
-        setTracks={setTracks}
         showControls={showControls}
         isProgressThumbPointerDown={isProgressThumbPointerDown}
         setIsProgressThumbPointerDown={setIsProgressThumbPointerDown}
