@@ -16,3 +16,12 @@ export interface VideoProgress {
   progressBarWidth: string;
   bufferedBarWidth: string;
 }
+
+export interface BaseSettingsProps {
+  onBackToSettings: () => void;
+} 
+
+export interface Soruce {
+  src: string;
+  quality: string;
+}

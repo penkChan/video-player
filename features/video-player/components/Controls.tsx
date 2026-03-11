@@ -14,7 +14,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Track, VideoProgress } from "../types/VideoPlayer";
+import { Soruce, Track, VideoProgress } from "../types/VideoPlayer";
 import { Progress } from "./Progress";
 
 export interface ControlsProps
@@ -38,6 +38,9 @@ export interface ControlsProps
   showControls: boolean;
   playVideo: () => void;
   pauseVideo: () => void;
+  soruces: Soruce[];
+  currentSoruce: Soruce | undefined;
+  setCurrentSoruce: Dispatch<SetStateAction<Soruce | undefined>>;
 }
 export function Controls({
   videoRef, // 视频元素引用
@@ -65,6 +68,9 @@ export function Controls({
   showProgressAreaTime,
   playVideo,
   pauseVideo,
+  soruces,
+  currentSoruce,
+  setCurrentSoruce,
 }: ControlsProps) {
   const [isVolumeUpHovering, setisVolumeUpHovering] = useState(false); // 音量滑块显示
   const [isFullScreen, setIsFullScreen] = useState(false); // 全屏按钮状态
@@ -360,11 +366,10 @@ export function Controls({
               />
             </span>
             <Slider
-              className={`h-[3px] transition-all duration-200 ${
-                isVolumeUpHovering
-                  ? "w-[100px] opacity-100"
-                  : "w-[0px] opacity-0"
-              }`}
+              className={`h-[3px] transition-all duration-200 ${isVolumeUpHovering
+                ? "w-[100px] opacity-100"
+                : "w-[0px] opacity-0"
+                }`}
               max={100}
               step={1}
               value={isMuted ? [0] : volume}
@@ -389,11 +394,10 @@ export function Controls({
               onClick={handleAutoPlayClick}
             >
               <div
-                className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${
-                  autoPlayActive
-                    ? "left-auto right-[-5px]"
-                    : "left-[-5px] right-0"
-                }`}
+                className={`absolute w-[17px] h-[17px] leading-[17px]  top-[50%] translate-y-[-50%] bg-[#727272] flex justify-center  items-center cursor-pointer rounded-[50%] ${autoPlayActive
+                  ? "left-auto right-[-5px]"
+                  : "left-[-5px] right-0"
+                  }`}
               >
                 {autoPlayActive ? (
                   <Icon
@@ -461,7 +465,11 @@ export function Controls({
         <Settings
           ref={settingsRef}
           speed={speed}
+          videoRef={videoRef}
           onSpeedChange={handleSpeedChange}
+          currentSoruce={currentSoruce}
+          setCurrentSoruce={setCurrentSoruce}
+          soruces={soruces}
           className="absolute w-[200px] right-[25px] bottom-[62px] bg-[rgba(28,28,28,0.7)] text-[#fff] overflow-y-auto z-20"
         ></Settings>
       )}

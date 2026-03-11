@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Spinner } from "../../components/ui/spinner";
-import { Track } from "./types/VideoPlayer";
+import { Soruce, Track } from "./types/VideoPlayer";
 import { Controls } from "./components/Controls";
 // import useSWR from "swr";
 // import { request } from "@/utils/fetcher";
@@ -20,7 +20,7 @@ export function VideoPlayer() {
   const [isPaused, setIsPaused] = useState(true); //  播放暂停
 
   const [bufferedBarWidth, setBufferedBarWidth] = useState("0%"); // 缓冲条的宽度
-  const [videoSrc, setVideoSrc] = useState<string | undefined>(undefined); // 视频源
+  const [currentSoruce, setCurrentSoruce] = useState<Soruce | undefined>(undefined); // 当前视频源
 
   const [visiableCaptions, setVisiableCaptions] = useState(false); // 控制字幕面板显隐、
   const [tracks, setTracks] = useState<Track[]>([]); // 字幕列表
@@ -34,6 +34,8 @@ export function VideoPlayer() {
   const [currentSeconds, setCurrentSeconds] = useState("00"); // 视频当前时长的秒数字符
   const [currentMinutes, setCurrentMinutes] = useState("00"); // 视频当前时长的分钟数字符
   const [isEnded, setIsEnded] = useState(false); // 视频是否播放结束
+
+  const [soruces, setSoruces] = useState<Soruce[]>([]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -51,8 +53,24 @@ export function VideoPlayer() {
   useEffect(() => {
     // 延迟加载视频，防止video loadedData事件触发太慢
     const raf = requestAnimationFrame(() => {
-      setVideoSrc(
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      const sorucesList = [
+        {
+          src: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
+          quality: "576p",
+        },
+        {
+          src: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-720p.mp4",
+          quality: "720p",
+        },
+        {
+          src: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4",
+          quality: "1080p",
+        },
+      ]
+      // 设置视频源
+      setSoruces(sorucesList);
+      setCurrentSoruce(
+        sorucesList[0]
       );
     });
     return () => cancelAnimationFrame(raf);
@@ -69,6 +87,7 @@ export function VideoPlayer() {
       }
     };
   }, []);
+
 
   useEffect(() => {
     // 延迟加载字幕，防止video loadedData事件触发太慢
@@ -234,12 +253,13 @@ export function VideoPlayer() {
         onPause={handleVideoPause}
         onLoadedData={handleVideoLoadedData}
         onTimeUpdate={handleTimeUpdate}
-        src={videoSrc}
+        src={currentSoruce?.src}
         onEnded={handleVideoEnded}
         onWaiting={handleVideoWaiting}
         onCanPlay={handleVideoCanPlay}
         crossOrigin="anonymous"
       >
+
         {tracks.map((trackItem) => (
           <track
             key={trackItem.src}
@@ -277,6 +297,9 @@ export function VideoPlayer() {
         showProgressAreaTime={showProgressAreaTime}
         playVideo={playVideo}
         pauseVideo={pauseVideo}
+        soruces={soruces}
+        currentSoruce={currentSoruce}
+        setCurrentSoruce={setCurrentSoruce}
       ></Controls>
     </div>
   );
