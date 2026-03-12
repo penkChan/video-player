@@ -38,6 +38,9 @@ export interface ControlsProps extends VideoProgress {
   visibleCaptions: boolean;
   setVisibleCaptions: Dispatch<SetStateAction<boolean>>;
   tracks: Track[];
+  bitrateList: import("dashjs").BitrateInfo[];
+  currentQualityIndex: number;
+  onQualityChange: (index: number) => void;
   showControls: boolean;
   playVideo: () => void;
   pauseVideo: () => void;
@@ -61,6 +64,9 @@ export function Controls({
   visibleCaptions,
   setVisibleCaptions,
   tracks,
+  bitrateList,
+  currentQualityIndex,
+  onQualityChange,
   showControls,
   isProgressThumbPointerDown,
   setIsProgressThumbPointerDown,
@@ -416,8 +422,10 @@ export function Controls({
           speed={speed}
           onSpeedChange={handleSpeedChange}
           videoRef={videoRef}
-          playerRef={playerRef}
           streamReady={streamReady}
+          bitrateList={bitrateList}
+          currentQualityIndex={currentQualityIndex}
+          onQualityChange={onQualityChange}
           className="absolute bottom-[62px] right-[25px] z-20 w-[200px] overflow-y-auto bg-[rgba(28,28,28,0.7)] text-[#fff]"
         />
       )}

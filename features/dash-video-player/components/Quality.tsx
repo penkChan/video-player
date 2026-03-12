@@ -1,60 +1,34 @@
 import clsx from "clsx";
 import { Icon } from "@iconify/react";
-import React, { forwardRef, useCallback, useEffect, useState } from "react";
-import type { RefObject } from "react";
+import React, { forwardRef, useCallback } from "react";
 import type { BaseSettingsProps } from "../types/DashVideiPlayer";
-import type dashjs from "dashjs";
+import { type BitrateInfo } from "dashjs";
 
 export interface QualityProps
   extends React.HTMLAttributes<HTMLDivElement>,
     BaseSettingsProps {
-  playerRef: RefObject<dashjs.MediaPlayerClass | null>;
-  videoRef: RefObject<HTMLVideoElement | null>;
-  streamReady?: boolean;
+  bitrateList: BitrateInfo[];
+  currentIndex: number;
+  onQualityChange: (index: number) => void;
 }
 
-function getQualityLabel(bitrateInfo: dashjs.BitrateInfo): string {
+function getQualityLabel(bitrateInfo: BitrateInfo): string {
   if (bitrateInfo.height) return `${bitrateInfo.height}p`;
   if (bitrateInfo.bitrate) return `${Math.round(bitrateInfo.bitrate / 1000)}kbps`;
   return `Quality ${bitrateInfo.qualityIndex}`;
 }
 
 const Quality = forwardRef<HTMLDivElement, QualityProps>(
-  ({ className, onBackToSettings, playerRef, videoRef, streamReady }, ref) => {
-    const [bitrateList, setBitrateList] = useState<dashjs.BitrateInfo[]>([]);
-    const [currentIndex, setCurrentIndex] = useState<number>(-1);
-
-    useEffect(() => {
-      const player = playerRef.current;
-      if (!player || streamReady === false) return;
-
-      const list = player.getBitrateInfoListFor("video");
-      if (list && list.length > 0) {
-        setBitrateList(list);
-        const idx = player.getQualityFor("video");
-        setCurrentIndex(typeof idx === "number" ? idx : -1);
-      }
-    }, [playerRef, streamReady]);
-
+  (
+    { className, onBackToSettings, bitrateList, currentIndex, onQualityChange },
+    ref,
+  ) => {
     const handleQualityChange = useCallback(
       (index: number) => {
-        const player = playerRef.current;
-        if (!player || !videoRef.current) return;
         if (index === currentIndex) return;
-
-        player.updateSettings({
-          streaming: {
-            abr: {
-              autoSwitchBitrate: {
-                video: false,
-              },
-            },
-          },
-        });
-        player.setQualityFor("video", index);
-        setCurrentIndex(index);
+        onQualityChange(index);
       },
-      [playerRef, videoRef, currentIndex],
+      [currentIndex, onQualityChange],
     );
 
     return (

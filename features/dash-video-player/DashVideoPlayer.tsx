@@ -25,6 +25,8 @@ export function DashVideoPlayer() {
     useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [bitrateList, setBitrateList] = useState<dashjs.BitrateInfo[]>([]);
+  const [currentQualityIndex, setCurrentQualityIndex] = useState<number>(-1);
   const [streamReady, setStreamReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -71,7 +73,24 @@ export function DashVideoPlayer() {
         index: t.index,
       }));
       setTracks(list);
+
+      // 初始化画质列表与当前档位（只在播放器初始化完成时获取一次，避免设置面板反复触发闪烁）
+      setBitrateList(player.getBitrateInfoListFor("video") || []);
+      const q = player.getQualityFor("video");
+      setCurrentQualityIndex(typeof q === "number" ? q : -1);
     });
+
+    const onQualityChangeRendered = (e: {
+      mediaType?: string;
+      newQuality?: number;
+    }) => {
+      if (e?.mediaType && e.mediaType !== "video") return;
+      if (typeof e?.newQuality === "number") setCurrentQualityIndex(e.newQuality);
+    };
+    player.on(
+      dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED,
+      onQualityChangeRendered,
+    );
 
     player.on(dashjs.MediaPlayer.events.BUFFER_EMPTY, () => {
       setSpinnerVisible(true);
@@ -86,9 +105,34 @@ export function DashVideoPlayer() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      player.off(
+        dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED,
+        onQualityChangeRendered,
+      );
       player.reset();
     };
   }, []);
+
+  const handleQualityChange = useCallback(
+    (index: number) => {
+      const player = playerRef.current;
+      if (!player) return;
+      if (index === currentQualityIndex) return;
+
+      player.updateSettings({
+        streaming: {
+          abr: {
+            autoSwitchBitrate: {
+              video: false,
+            },
+          },
+        },
+      });
+      player.setQualityFor("video", index);
+      setCurrentQualityIndex(index);
+    },
+    [currentQualityIndex],
+  );
 
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
@@ -251,6 +295,9 @@ export function DashVideoPlayer() {
         visibleCaptions={visibleCaptions}
         setVisibleCaptions={setVisibleCaptions}
         tracks={tracks}
+        bitrateList={bitrateList}
+        currentQualityIndex={currentQualityIndex}
+        onQualityChange={handleQualityChange}
         showControls={showControls}
         isProgressThumbPointerDown={isProgressThumbPointerDown}
         setIsProgressThumbPointerDown={setIsProgressThumbPointerDown}

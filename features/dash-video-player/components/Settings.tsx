@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import React, { forwardRef, useCallback, useState } from "react";
 import type { RefObject } from "react";
 import type { BaseSettingsProps } from "../types/DashVideiPlayer";
-import type dashjs from "dashjs";
+import type { BitrateInfo } from "dashjs";
 import Speed, { type SpeedProps } from "./Speed";
 import Quality from "./Quality";
 
@@ -11,8 +11,10 @@ export interface SettingsProps
   extends React.HTMLAttributes<HTMLDivElement>,
     Omit<SpeedProps, keyof BaseSettingsProps> {
   videoRef: RefObject<HTMLVideoElement | null>;
-  playerRef: RefObject<dashjs.MediaPlayerClass | null>;
   streamReady?: boolean;
+  bitrateList: BitrateInfo[];
+  currentQualityIndex: number;
+  onQualityChange: (index: number) => void;
 }
 
 const Settings = forwardRef<HTMLDivElement, SettingsProps>(
@@ -22,8 +24,10 @@ const Settings = forwardRef<HTMLDivElement, SettingsProps>(
       speed,
       onSpeedChange,
       videoRef,
-      playerRef,
       streamReady,
+      bitrateList,
+      currentQualityIndex,
+      onQualityChange,
     },
     ref,
   ) => {
@@ -61,9 +65,9 @@ const Settings = forwardRef<HTMLDivElement, SettingsProps>(
         )}
         {currentSetting === "quality" && (
           <Quality
-            playerRef={playerRef}
-            videoRef={videoRef}
-            streamReady={streamReady}
+            bitrateList={bitrateList}
+            currentIndex={currentQualityIndex}
+            onQualityChange={onQualityChange}
             onBackToSettings={onBackToSettings}
           />
         )}
