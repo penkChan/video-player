@@ -1,10 +1,5 @@
-import { DashVideoPlayer } from "@/features/dash-video-player/DashVideoPlayer";
+import { redirect } from "next/navigation";
 
 export default function DashPlayerPage() {
-  return (
-    <div className="flex min-h-screen w-screen items-center justify-center bg-[#333] font-sans ">
-      <DashVideoPlayer />
-    </div>
-  );
+  redirect("/player/dash-player");
 }
-

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function HtmlPlayerPage() {
+export default function PlayerPage() {
   redirect("/player/html-player");
 }
