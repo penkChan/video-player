@@ -5,6 +5,7 @@ import dashjs from "dashjs";
 
 import { Spinner } from "../../components/ui/spinner";
 import { Controls } from "./components/Controls";
+import { Track } from "./types/DashVideiPlayer";
 
 export function DashVideoPlayer() {
   const [progressBarWidth, setProgressBarWidth] = useState("0%");
@@ -13,7 +14,7 @@ export function DashVideoPlayer() {
   const [bufferedBarWidth, setBufferedBarWidth] = useState("0%");
   const [spinnerVisible, setSpinnerVisible] = useState(false);
   const [totalMinutes, setTotalMinutes] = useState("00");
-  const [totalSeconds, setTotalSeconds] = useState("00");
+  const [totalSeconds, setTotalSeconds] = useState("00"); // 视频总时长的秒数字符
   const [currentSeconds, setCurrentSeconds] = useState("00");
   const [currentMinutes, setCurrentMinutes] = useState("00");
   const [visibleSettings, setVisibleSettings] = useState(false);
@@ -23,7 +24,7 @@ export function DashVideoPlayer() {
   const [isProgressThumbPointerDown, setIsProgressThumbPointerDown] =
     useState(false);
   const [isEnded, setIsEnded] = useState(false);
-  const [tracks, setTracks] = useState<{ label: string }[]>([]);
+  const [tracks, setTracks] = useState<Track[]>([]);
   const [streamReady, setStreamReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -36,14 +37,19 @@ export function DashVideoPlayer() {
   useEffect(() => {
     if (!videoRef.current) return;
 
+    // 使用带字幕的 DASH 流
     const url =
-      "http://rdmedia.bbc.co.uk/bbb/2/client_manifest-common_init.mpd";
+      "https://dash.akamaized.net/akamai/test/caption_test/ElephantsDream/elephants_dream_480p_heaac5_1_https.mpd";
 
     const player = dashjs.MediaPlayer().create();
     playerRef.current = player;
     player.initialize(videoRef.current, url, false);
     player.updateSettings({
       streaming: {
+        // dashjs@4.7.x：用 text.dispatchForManualRendering 触发 CueEnter/CueExit 事件
+        text: {
+          dispatchForManualRendering: true,
+        },
         abr: {
           autoSwitchBitrate: {
             video: true,
@@ -55,11 +61,16 @@ export function DashVideoPlayer() {
     player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
       setSpinnerVisible(false);
       setStreamReady(true);
-      if (videoRef.current) {
-        const textTracks = videoRef.current.textTracks;
-        const list = Array.from(textTracks).map((t) => ({ label: t.label }));
-        setTracks(list);
-      }
+
+      // 使用 dash.js 自己的字幕轨道信息
+      const textTracks =
+        (player.getTracksFor("text") as dashjs.MediaInfo[]) || [];
+      const list = textTracks.map((t) => ({
+        // 只使用语言代码作为展示文案，例如 "en"、"fr"
+        label: t.lang ?? `Text ${t.index}`,
+        index: t.index,
+      }));
+      setTracks(list);
     });
 
     player.on(dashjs.MediaPlayer.events.BUFFER_EMPTY, () => {

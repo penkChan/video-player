@@ -1,9 +1,9 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
 
 export interface Track {
+  // 只在 UI 中展示的字幕名称，这里简化为纯字符串（例如 "en"、"zh-CN"）
   label: string;
-  src: string;
-  srcLang: string;
+  index: number | null;
 }
 
 export interface VideoProgress {

@@ -1,3 +1,5 @@
+"use client";
+
 import { Icon } from "@iconify/react";
 import { Slider } from "@/components/ui/slider";
 import { usePlayerStore } from "@/stores/player.store";
@@ -12,8 +14,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { VideoProgress } from "../types/DashVideiPlayer";
-import type dashjs from "dashjs";
+import type { Track, VideoProgress } from "../types/DashVideiPlayer";
+import dashjs, { type MediaPlayerClass } from "dashjs";
 import { Progress } from "./Progress";
 import Settings from "./Settings";
 import Captions from "./Captions";
@@ -21,7 +23,7 @@ import Captions from "./Captions";
 export interface ControlsProps extends VideoProgress {
   videoRef: RefObject<HTMLVideoElement | null>;
   mainVideoRef: RefObject<HTMLDivElement | null>;
-  playerRef: RefObject<dashjs.MediaPlayerClass | null>;
+  playerRef: RefObject<MediaPlayerClass | null>;
   autoPlayActive: boolean;
   setAutoPlayActive: Dispatch<SetStateAction<boolean>>;
   isPaused: boolean;
@@ -35,7 +37,7 @@ export interface ControlsProps extends VideoProgress {
   setVisibleSettings: Dispatch<SetStateAction<boolean>>;
   visibleCaptions: boolean;
   setVisibleCaptions: Dispatch<SetStateAction<boolean>>;
-  tracks: { label: string }[];
+  tracks: Track[];
   showControls: boolean;
   playVideo: () => void;
   pauseVideo: () => void;
@@ -92,8 +94,6 @@ export function Controls({
 
   const settingsRef = useRef<HTMLDivElement>(null);
   const captionsRef = useRef<HTMLDivElement>(null);
-  const activeTrackRef = useRef<TextTrack | null>(null);
-  const cueHandlerRef = useRef<((e: Event) => void) | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -126,39 +126,52 @@ export function Controls({
     }
   }, [speed, videoRef]);
 
+  // 选中某个字幕选项时，通知 dash.js 切换对应的 text track
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const textTracks = video.textTracks;
-    if (activeTrackRef.current && cueHandlerRef.current) {
-      activeTrackRef.current.removeEventListener(
-        "cuechange",
-        cueHandlerRef.current,
-      );
-    }
+    const player = playerRef.current;
+    if (!player) return;
 
     if (captionType === "OFF") {
-      activeTrackRef.current = null;
+      // 关闭字幕
+      // -1 在 dash.js 中表示禁用 text track
+      player.setTextTrack?.(-1);
       return;
     }
 
-    const track = Array.from(textTracks).find((t) => t.label === captionType);
-    if (!track) return;
+    const trackInfo = tracks.find((t) => t.label === captionType);
+    if (!trackInfo || trackInfo.index === null) return;
 
-    track.mode = "hidden";
-    const handler = () => {
-      const active = track.activeCues;
-      setSubtitle(
-        active && active.length > 0 ? (active[0] as VTTCue).text : "",
-      );
+    player.setTextTrack?.(trackInfo.index);
+  }, [captionType, tracks, playerRef]);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    const events = (dashjs as unknown as { MediaPlayer: { events: Record<string, string> } })
+      .MediaPlayer.events;
+
+    const onCueEnter = (e: unknown) => {
+      if (captionType === "OFF") return;
+      const payload = e as { text?: string; html?: string };
+      setSubtitle(payload.text ?? payload.html ?? "");
     };
-    handler();
-    track.addEventListener("cuechange", handler);
-    activeTrackRef.current = track;
-    cueHandlerRef.current = handler;
-    return () => track.removeEventListener("cuechange", handler);
-  }, [captionType, videoRef]);
+
+    const onCueExit = () => {
+      setSubtitle("");
+    };
+
+    const cueEnterEvent = events.CUE_ENTER ?? "cueEnter";
+    const cueExitEvent = events.CUE_EXIT ?? "cueExit";
+
+    player.on?.(cueEnterEvent, onCueEnter);
+    player.on?.(cueExitEvent, onCueExit);
+
+    return () => {
+      player.off?.(cueEnterEvent, onCueEnter);
+      player.off?.(cueExitEvent, onCueExit);
+    };
+  }, [captionType, playerRef]);
 
   useEffect(() => {
     const handleFullScreenChange = () => {
