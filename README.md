@@ -2,10 +2,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Overview
 
-this is a custom video-player for next.js, restruct from tutorial from native javascript to next.js,
+this is a custom video-player for next.js, restruct from tutorial from native javascript to next.js, realized h5-player and dashjs high-performance adaptive bitrate player.
+- h5-player: use html5 video and audio api
+- dashjs high-performance adaptive bitrate player: use dashjs library
+- custom controls: progress bar, volume, speed, caption, settings, fullscreen, picture in picture, thumbnail, quality, playback speed, etc.
+- use shadcn/ui slider https://ui.shadcn.com/docs/components/radix/slider
+- use zustand for state management https://zustand.docs.pmnd.rs/getting-started/introduction
+
 tutorial https://www.youtube.com/watch?v=Ntd6lzohOTQ
-use shadcn/ui slider https://ui.shadcn.com/docs/components/radix/slider
-use zustand for state management https://zustand.docs.pmnd.rs/getting-started/introduction
+
 
 ## Getting Started
 
