@@ -16,9 +16,19 @@ export function DashVideoPlayer() {
   const [totalSeconds, setTotalSeconds] = useState("00");
   const [currentSeconds, setCurrentSeconds] = useState("00");
   const [currentMinutes, setCurrentMinutes] = useState("00");
+  const [visibleSettings, setVisibleSettings] = useState(false);
+  const [visibleCaptions, setVisibleCaptions] = useState(false);
+  const [autoPlayActive, setAutoPlayActive] = useState(false);
+  const [showProgressAreaTime, setShowProgressAreaTime] = useState(false);
+  const [isProgressThumbPointerDown, setIsProgressThumbPointerDown] =
+    useState(false);
+  const [isEnded, setIsEnded] = useState(false);
+  const [tracks, setTracks] = useState<{ label: string }[]>([]);
+  const [streamReady, setStreamReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const mainVideoRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<dashjs.MediaPlayerClass | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hideControlsDelay = 3000;
@@ -30,6 +40,7 @@ export function DashVideoPlayer() {
       "http://rdmedia.bbc.co.uk/bbb/2/client_manifest-common_init.mpd";
 
     const player = dashjs.MediaPlayer().create();
+    playerRef.current = player;
     player.initialize(videoRef.current, url, false);
     player.updateSettings({
       streaming: {
@@ -43,6 +54,12 @@ export function DashVideoPlayer() {
 
     player.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
       setSpinnerVisible(false);
+      setStreamReady(true);
+      if (videoRef.current) {
+        const textTracks = videoRef.current.textTracks;
+        const list = Array.from(textTracks).map((t) => ({ label: t.label }));
+        setTracks(list);
+      }
     });
 
     player.on(dashjs.MediaPlayer.events.BUFFER_EMPTY, () => {
@@ -54,6 +71,7 @@ export function DashVideoPlayer() {
     });
 
     return () => {
+      playerRef.current = null;
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
@@ -61,16 +79,16 @@ export function DashVideoPlayer() {
     };
   }, []);
 
-  // 自动隐藏控制条
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
-
     if (hideControlsTimerRef.current) {
       clearTimeout(hideControlsTimerRef.current);
     }
-
     hideControlsTimerRef.current = setTimeout(() => {
       setShowControls(false);
+      setVisibleSettings(false);
+      setVisibleCaptions(false);
+      setShowProgressAreaTime(false);
     }, hideControlsDelay);
   }, []);
 
@@ -114,7 +132,7 @@ export function DashVideoPlayer() {
   };
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
+    if (!isProgressThumbPointerDown && videoRef.current) {
       const currentTime = videoRef.current.currentTime;
       const currentMinutes = Math.floor(currentTime / 60);
       const currentSeconds = Math.floor(currentTime % 60);
@@ -158,6 +176,18 @@ export function DashVideoPlayer() {
 
   const handleMainVideoOnMouseLeave = () => {
     setShowControls(false);
+    setVisibleSettings(false);
+    setVisibleCaptions(false);
+    setShowProgressAreaTime(false);
+  };
+
+  const handleVideoEnded = () => {
+    if (autoPlayActive) {
+      playVideo();
+      setIsEnded(false);
+    } else {
+      setIsEnded(true);
+    }
   };
 
   const handleVideoWaiting = () => {
@@ -187,22 +217,40 @@ export function DashVideoPlayer() {
         onPause={handleVideoPause}
         onLoadedData={handleVideoLoadedData}
         onTimeUpdate={handleTimeUpdate}
+        onEnded={handleVideoEnded}
         onWaiting={handleVideoWaiting}
         onCanPlay={handleVideoCanPlay}
         crossOrigin="anonymous"
       />
       <Controls
         videoRef={videoRef}
+        mainVideoRef={mainVideoRef}
+        playerRef={playerRef}
+        autoPlayActive={autoPlayActive}
+        setAutoPlayActive={setAutoPlayActive}
         isPaused={isPaused}
-        playVideo={playVideo}
-        pauseVideo={pauseVideo}
+        setIsPaused={setIsPaused}
         totalMinutes={totalMinutes}
         totalSeconds={totalSeconds}
         currentSeconds={currentSeconds}
         currentMinutes={currentMinutes}
+        isEnded={isEnded}
+        visibleSettings={visibleSettings}
+        setVisibleSettings={setVisibleSettings}
+        visibleCaptions={visibleCaptions}
+        setVisibleCaptions={setVisibleCaptions}
+        tracks={tracks}
+        showControls={showControls}
+        isProgressThumbPointerDown={isProgressThumbPointerDown}
+        setIsProgressThumbPointerDown={setIsProgressThumbPointerDown}
+        setProgressBarWidth={setProgressBarWidth}
         progressBarWidth={progressBarWidth}
         bufferedBarWidth={bufferedBarWidth}
-        showControls={showControls}
+        setShowProgressAreaTime={setShowProgressAreaTime}
+        showProgressAreaTime={showProgressAreaTime}
+        playVideo={playVideo}
+        pauseVideo={pauseVideo}
+        streamReady={streamReady}
       />
     </div>
   );
